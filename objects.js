@@ -1,34 +1,36 @@
-class Object {
+class BaseObject {
     obj;
     x;
     y;
     width;
-    colliders;
+    objects;
     collider;
     animator;
 
     /**
      * 
-     * @param {*} colliders массив всех коллайдеров
-     * @param {*} collider массив точек коллайдера
-     * @param {*} id id
-     * @param {*} animatorParams параметры для аниматора 
-     * @param {*} startState начальное состояние аниматора
-     * @param {*} x позиция X
-     * @param {*} y позиция Y
+     * @param {Array<BaseObject>} objects массив всех объектов
+     * @param {Array<Array<Number>>} collider массив точек коллайдера
+     * @param {String} id id
+     * @param {Object} animatorParams параметры для аниматора 
+     * @param {String} startState начальное состояние аниматора
+     * @param {Number} x позиция X
+     * @param {Number} y позиция Y
      */
-    constructor(colliders, collider, id, animatorParams, startState, x = 0, y = 0) {
+    constructor(objects, collider, id, animatorParams, startState, x = 0, y = 0) {
         this.obj = document.createElement("img");
 
         this.animator = new Animator(animatorParams, this.obj, startState);
+        this.width = this.obj.naturalWidth;
 
         this.x = x;
         this.y = y;
 
-        this.colliders = colliders;
+        this.objects = objects;
 
         for (let i = 0; i < collider.length; i++) {
-            collider[i] *= this.width;
+            collider[i][0] *= this.width;
+            collider[i][1] *= this.width;
         }
         this.collider = collider;
 
@@ -37,39 +39,60 @@ class Object {
         this.obj.style.left = x + "px";
         this.obj.style.bottom = y + "px";
 
-        this.width = this.obj.naturalWidth;
-
         document.body.append(this.obj);
     }
 }
 
-class DynamicObject extends Object {
+class DynamicObject extends BaseObject {
     velocity = [0, 0];
     angularVelocity = 0;
     mass = 10;
+    center = [0, 0]
+
+    reduceVelocity = true;
+    static reduceFactor = 0.05;
     
     static maxVelocity = 10;
     
-    constructor(colliders, collider, id, animatorParams, startState, x = 0, y = 0, mass = 10) {
-        super(colliders, collider, id, animatorParams, startState, x, y);
+    /**
+     * 
+     * @param {Array<BaseObject>} objects массив всех объектов
+     * @param {Array<Array<Number>>} collider массив точек коллайдера
+     * @param {String} id id
+     * @param {Object} animatorParams параметры для аниматора 
+     * @param {String} startState начальное состояние аниматора
+     * @param {Number} x позиция X
+     * @param {Number} y позиция Y
+     * @param {Number} mass масса объекта
+     */
+    constructor(objects, collider, id, animatorParams, startState, x = 0, y = 0, mass = 10) {
+        super(objects, collider, id, animatorParams, startState, x, y);
 
+        objects.push(this);
+
+        this.center = getCentreOfMass(collider);
         this.mass = mass;
+
+        console.log(this.x, this.y);
     }
 
     /**
-     * 
-     * @param {Object} object 
+     * Проверяет, есть ли точка столкновения с объектом
+     * @param {Object} object объект
+     * @returns null или [x, y] столкновения
      */
     collide(object) {
         let dots = [];
+        let len1 = this.collider.length;
 
-        for (let b = 0; b < this.collider.length - 1; b++) {
+        for (let b = 0; b < len; b++) {
             let x11 = this.collider[b][0], y11 = this.collider[b][1];
-            let x12 = this.collider[b][0], y12 = this.collider[b][1];
+            let x12 = this.collider[(b + 1) % len1][0], y12 = this.collider[(b + 1) % len1][1];
 
-            for (let i = 0; i < object.collider.length; i++) {
+            let len2 = object.collider.length;
+            for (let i = 0; i < len2; i++) {
                 let x21 = object.collider[i][0], y21 = object.collider[i][1];
-                let x22 = object.collider[i][0], y22 = object.collider[i][1];
+                let x22 = object.collider[(i + 1) % len2][0], y22 = object.collider[(i + 1) % len2][1];
 
                 let dot = this.collideDot(x11, y11, x12, y12, x21, y21, x22, y22);
                 if (dot != null)
@@ -82,10 +105,21 @@ class DynamicObject extends Object {
 
         if (dots.length == 0)
             return null;
-        else
-            return dots[0];
+        return dots[0];
     }
 
+    /**
+     * Вычисляет точку столкновения по двум сторонам
+     * @param {Number} x11 
+     * @param {Number} y11 
+     * @param {Number} x12 
+     * @param {Number} y12 
+     * @param {Number} x21 
+     * @param {Number} y21 
+     * @param {Number} x22 
+     * @param {Number} y22 
+     * @returns null или [x, y, длинна вектора]
+     */
     collideDot(x11, y11, x12, y12, x21, y21, x22, y22) {
         let d = (x22-x21)*(y12-y11) - (x12-x11)*(y22-y21);
         if (d == 0)
@@ -100,21 +134,43 @@ class DynamicObject extends Object {
 
     /**
      * 
-     * @param {number} velocity ускорение объекта
+     * @param {Array<Number>} velocity ускорение объекта
+     * @param {Number} angularVelocity вращательное ускорение
      */
     addVelocity(velocity, angularVelocity) {
-        this.velocity += velocity;
-        angularVelocity = Math.max(this.maxVelocity, this.angularVelocity + angularVelocity);
+        console.log(velocity);
+
+        this.reduceVelocity = !(velocity[0] || velocity[1]);
+
+        if (!this.reduceVelocity) {
+            this.velocity[0] += velocity[0];
+            this.velocity[1] += velocity[1];
+        }
+
+        this.angularVelocity = Math.max(DynamicObject.maxVelocity, this.angularVelocity + angularVelocity);
 
         let length = (this.velocity[0]**2 + this.velocity[0]**2) ** 0.5;
 
-        if (length > maxVelocity) {
-            this.velocity[0] *= maxVelocity / length;
-            this.velocity[1] *= maxVelocity / length;
+        if (length > DynamicObject.maxVelocity) {
+            this.velocity[0] *= DynamicObject.maxVelocity / length;
+            this.velocity[1] *= DynamicObject.maxVelocity / length;
         }
     }
 
+    /**
+     * 
+     * @param {Number} deltaTime время кадра
+     */
     update(deltaTime) {
-        x += this.velocity * deltaTime;
+        this.x += this.velocity[0] * deltaTime;
+        this.y += this.velocity[1] * deltaTime;
+        
+        this.obj.style.left = this.x + "px";
+        this.obj.style.bottom = this.y + "px";
+
+        if (this.reduceVelocity) {
+            this.velocity[0] += (0 - this.velocity[0]) * DynamicObject.reduceFactor;
+            this.velocity[1] += (0 - this.velocity[1]) * DynamicObject.reduceFactor;
+        }
     }
 }

@@ -1,51 +1,87 @@
 class Animator {
-    root;
-    type;
-    states;
-    obj;
-    timer = null;
+    /**@type {String} */
+    root = "";
 
-    state;
-    duration;
-    frames;
-    frame;
+    /**@type {Object<String, Array<HTMLImageElement>>} спрайты состояний по их состояниям*/
+    states = {};
 
+    /**@type {Object<String, Number>} длительность фрейма между состояниями*/
+    durations = {};
+
+    /**@type {HTMLImageElement} объект анимации, <img>*/
+    obj = null;
+
+    /**@type {Number} id таймера*/
+    timer = 0;
+
+    /**@type {String} текущее состояние анимации*/
+    state = "";
+
+    /**@type {Number} индекс фрейма*/
+    frame = 0;
+
+    /**@type {Number} кол-во фреймов*/
+    frames = 0;
+
+    /**
+     * 
+     * @param {Object} params параметры анимации
+     * @param {HTMLImageElement} target объект анимации, <img>
+     * @param {String} startState начальное состояние
+     */
     constructor(params, target, startState) {
         this.root = params["root"];
-        this.type = params["type"];
-        this.states = params["states"];
-        
+        this.loadSprites(params["states"]);
+
         this.obj = target;
-        this.obj.src = this.getSourceByState(startState);
 
         this.setState(startState);
     }
 
-    loadSprites() {
-        
+    /**
+     * 
+     * @param {*} states 
+     */
+    loadSprites(states) {
+        Object.keys(states).forEach(x => {
+            let imgs = [];
+            for (let i = 0; i < states[x][0]; i++) {
+                imgs[i] = new Image();
+                imgs[i].src = this.getSourceByStateAndFrame(x, i);
+            }
+            this.states[x] = imgs;
+            this.durations[x] = states[x][1];
+        });
     }
 
+    /**
+     * Задаёт состояние анимации
+     * @param {String} state состояние
+     */
     setState(state) {
-        console.log(this.states);
         if (state == this.state)
             return;
 
-        this.state = this.states[state];
-        this.frames = this.state[0];
-        this.duration = this.state[1];
+        this.state = state;
         this.frame = 0;
+        this.frames = this.states[state].length;
 
-        if (this.timer != null)
+        if (this.timer != 0)
             clearInterval(this.timer);
 
         this.timer = setInterval(() => {
-            this.obj.src = this.getSourceByState(state);
-            this.frame++;
-            this.frame = this.frame > this.frames;
-        }, this.duration);
+            this.obj.src = this.states[state][this.frame].src;
+            this.frame = (this.frame + 1) % this.frames;
+        }, this.durations[state]);
     }
 
-    getSourceByState(state) {
-        return "sprites/" + this.root + "/" + state + "/" + this.frame + ".png"; 
+    /**
+     * Возвращает путь до изображения указанного фрейма по состоянию
+     * @param {String} state состояние
+     * @param {Number} frame номер фрейма
+     * @returns путь до изображения
+     */
+    getSourceByStateAndFrame(state, frame) {
+        return `sprites/${this.root}/${state}/${frame}.png`; 
     }
 }

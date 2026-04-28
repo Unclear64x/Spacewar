@@ -18,7 +18,6 @@ let doorAnimation = {
 
 let gunAnimation = {
     "root": "gun",
-    "type": "dynamic",
     "states": {
         "idle": [1, 1000],
         "fire": [4, 100] // зависит от скорострельности
@@ -27,19 +26,17 @@ let gunAnimation = {
 
 let shipAnimation = {
     "root": "ship",
-    "type": "dynamic",
     "states": {
                 //кол-во фреймов, время между фреймами (мс)
-        "idle": [2, 80],
-        "move": [4, 80]
+        "idle": [2, 1000],
+        "move": [4, 200]
     }
 }
 
 let asteroidAnimation = {
     "root": "asteroid",
-    "type": "static",
     "states": {
-        "none": "0",
-        "damaged": "1"
+        "none": [1, 0],
+        "damaged": [1, 0]
     }
 }
