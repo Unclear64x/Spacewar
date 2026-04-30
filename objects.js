@@ -37,22 +37,25 @@ class BaseObject {
         this.obj.id = id;
         this.obj.className = "object";
         this.obj.style.left = x + "px";
-        this.obj.style.bottom = y + "px";
+        this.obj.style.top = y + "px";
 
-        document.body.append(this.obj);
+        document.getElementById("space").append(this.obj);
     }
 }
 
 class DynamicObject extends BaseObject {
     velocity = [0, 0];
     angularVelocity = 0;
-    mass = 10;
-    center = [0, 0]
+    mass = 1;
+    center = [0, 0];
+    angle = 0;
 
     reduceVelocity = true;
+    reduceAngularVelocity = true;
     static reduceFactor = 0.05;
     
-    static maxVelocity = 10;
+    static maxVelocity = 300;
+    static maxAngularVelocity = 10;
     
     /**
      * 
@@ -65,7 +68,7 @@ class DynamicObject extends BaseObject {
      * @param {Number} y позиция Y
      * @param {Number} mass масса объекта
      */
-    constructor(objects, collider, id, animatorParams, startState, x = 0, y = 0, mass = 10) {
+    constructor(objects, collider, id, animatorParams, startState, x = 0, y = 0, mass = 1) {
         super(objects, collider, id, animatorParams, startState, x, y);
 
         objects.push(this);
@@ -137,24 +140,28 @@ class DynamicObject extends BaseObject {
      * @param {Array<Number>} velocity ускорение объекта
      * @param {Number} angularVelocity вращательное ускорение
      */
+    #addVelocity(velocity, angularVelocity) {
+        //console.log(velocity);
+        //console.log(this.reduceAngularVelocity, angularVelocity);
+
+        let scalar = 0; //getScalarProduct(this.velocity, velocity);
+
+        this.velocity[0] += velocity[0] * (1 + scalar);
+        this.velocity[1] += velocity[1] * (1 + scalar);
+
+        this.angularVelocity = Math.min(Math.max(this.angularVelocity + angularVelocity, -DynamicObject.maxAngularVelocity), DynamicObject.maxAngularVelocity);
+    }
+
+    /**
+     * 
+     * @param {Array<Number>} velocity ускорение объекта
+     * @param {Number} angularVelocity вращательное ускорение
+     */
     addVelocity(velocity, angularVelocity) {
-        console.log(velocity);
-
         this.reduceVelocity = !(velocity[0] || velocity[1]);
+        this.reduceAngularVelocity = angularVelocity == 0;
 
-        if (!this.reduceVelocity) {
-            this.velocity[0] += velocity[0];
-            this.velocity[1] += velocity[1];
-        }
-
-        this.angularVelocity = Math.max(DynamicObject.maxVelocity, this.angularVelocity + angularVelocity);
-
-        let length = (this.velocity[0]**2 + this.velocity[0]**2) ** 0.5;
-
-        if (length > DynamicObject.maxVelocity) {
-            this.velocity[0] *= DynamicObject.maxVelocity / length;
-            this.velocity[1] *= DynamicObject.maxVelocity / length;
-        }
+        this.#addVelocity(velocity, angularVelocity, false);
     }
 
     /**
@@ -164,13 +171,17 @@ class DynamicObject extends BaseObject {
     update(deltaTime) {
         this.x += this.velocity[0] * deltaTime;
         this.y += this.velocity[1] * deltaTime;
+
+        this.angle += this.angularVelocity * deltaTime;
         
         this.obj.style.left = this.x + "px";
-        this.obj.style.bottom = this.y + "px";
+        this.obj.style.top = this.y + "px";
 
-        if (this.reduceVelocity) {
-            this.velocity[0] += (0 - this.velocity[0]) * DynamicObject.reduceFactor;
-            this.velocity[1] += (0 - this.velocity[1]) * DynamicObject.reduceFactor;
-        }
+        this.obj.style.transform = `translate(-50%, -50%) rotate(${this.angle}rad)`
+
+        this.#addVelocity(
+            this.reduceVelocity ? [-this.velocity[0] / 2, -this.velocity[1] / 2] : [0, 0],
+            this.reduceAngularVelocity ? -this.angularVelocity / 2: 0
+        );
     }
 }

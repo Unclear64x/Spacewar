@@ -44,3 +44,53 @@ function getCentreOfMass(vertices) {
 
     return [x, y];
 }
+
+/**
+ * Возвращает длину вектора
+ * @param {Array<Number>} vector 
+ */
+function getVectorLength(vector) {
+    return (vector[0] ** 2 + vector[1] ** 2) ** 0.5;
+}
+
+/**
+ * Возвращает векторное произведение векторов
+ * @param {Array<Number>} vector1 
+ * @param {Array<Number>} vector2 
+ */
+function getVectorProduct(vector1, vector2) {
+    return (vector1[0] * vector2[1]) - (vector1[1] * vector2[0]);
+}
+
+/**
+ * Возвращает скалярное произведение векторов
+ * @param {Array<Number>} vector1 
+ * @param {Array<Number>} vector2 
+ */
+function getScalarProduct(vector1, vector2) {
+    return (vector1[0] * vector2[0]) + (vector1[1] * vector2[1]);
+}
+
+function getCosFromVectors(vector1, vector2) {
+    let len1 = getVectorLength(vector1);
+    let len2 = getVectorLength(vector2);
+
+    if (len1 == 0 || len2 == 0) {
+        return 0;
+    }
+
+    return getScalarProduct(vector1, vector2) / (len1 * len2);
+}
+
+/**
+ * Возвращает нормализованный вектор
+ * @param {Array<Number>} vector 
+ */
+function getNormalizedVector(vector) {
+    if (vector[0] == 0 && vector[1] == 1)
+        return [0, 0];
+
+    let len = getVectorLength(vector);
+    
+    return [vector[0] / len, vector[1] / len];
+}
