@@ -11,6 +11,14 @@ let keys = {};
 /**@type {Array<DynamicObject>} */
 let objects = [];
 
+let move = false;
+let velocity = new Vector(0, 0);
+let forwardVelocity = new Vector(0, 0);
+let rightVelocity = new Vector(0, 0);
+let angularVelocity = 0;
+let cursor = new Vector(0, 0);
+
+
 addEventListeners();
 
 function update(currentTime) {
@@ -32,26 +40,33 @@ function keyPressed(keyCode) {
 }
 
 function playerInput(delta) {
-    let velocity = [0, 0];
-    let angularVelocity = 0;
+    forwardVelocity.set(Math.cos(player.angle), Math.sin(player.angle));
+    rightVelocity.set(forwardVelocity.y, -forwardVelocity.x);
 
+    let tan = Math.atan2(cursor.y, cursor.x);
+    let angle = tan - player.angle;
+    
+    if (angle < -Math.PI) angle += Math.PI * 2;
+    if (angle > Math.PI) angle -= Math.PI * 2;
+    
+    angularVelocity = (angle - player.angularVelocity / 4);
+
+    velocity.set(0, 0);
     if (keyPressed("KeyW")) {
-        velocity = [Math.cos(player.angle), Math.sin(player.angle)];
+        velocity.add(forwardVelocity);
     }
     else if (keyPressed("KeyS")) {
-        velocity = [-Math.cos(player.angle), -Math.sin(player.angle)];
+        velocity.remove(forwardVelocity);
     }
 
     if (keyPressed("KeyA")) {
-        angularVelocity = -15 * Math.PI / 180;
+        velocity.add(rightVelocity);
     }
     else if (keyPressed("KeyD")) {
-        angularVelocity = 15 * Math.PI / 180;
+        velocity.remove(rightVelocity);
     }
 
-    //console.log(velocity, (velocity[0] ** 2 + velocity[1] ** 2) ** 0.5);
-
-    player.addVelocity(velocity, angularVelocity);
+    player.addVelocity(velocity.normalize(), angularVelocity);
 }
 
 function centerAtPlayer() {
@@ -76,4 +91,7 @@ function addEventListeners() {
     window.addEventListener("keyup", (e) => {
         keys[e.code] = false;
     });
+    window.addEventListener("mousemove", (e) => {
+        cursor.set(e.clientX - (window.innerWidth / 2), e.clientY - (window.innerHeight / 2));
+    })
 }

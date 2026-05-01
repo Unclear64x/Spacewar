@@ -10,7 +10,7 @@ class BaseObject {
     /**
      * 
      * @param {Array<BaseObject>} objects массив всех объектов
-     * @param {Array<Array<Number>>} collider массив точек коллайдера
+     * @param {Array<Vector>} collider массив точек коллайдера
      * @param {String} id id
      * @param {Object} animatorParams параметры для аниматора 
      * @param {String} startState начальное состояние аниматора
@@ -29,8 +29,7 @@ class BaseObject {
         this.objects = objects;
 
         for (let i = 0; i < collider.length; i++) {
-            collider[i][0] *= this.width;
-            collider[i][1] *= this.width;
+            collider[i].multiply(this.width);
         }
         this.collider = collider;
 
@@ -44,11 +43,13 @@ class BaseObject {
 }
 
 class DynamicObject extends BaseObject {
-    velocity = [0, 0];
+    velocity = new Vector(0, 0);
+    angle = 0;
     angularVelocity = 0;
     mass = 1;
-    center = [0, 0];
-    angle = 0;
+    center;
+
+    velocityMultiplier = 2;
 
     reduceVelocity = true;
     reduceAngularVelocity = true;
@@ -60,7 +61,7 @@ class DynamicObject extends BaseObject {
     /**
      * 
      * @param {Array<BaseObject>} objects массив всех объектов
-     * @param {Array<Array<Number>>} collider массив точек коллайдера
+     * @param {Array<Vector>} collider массив точек коллайдера
      * @param {String} id id
      * @param {Object} animatorParams параметры для аниматора 
      * @param {String} startState начальное состояние аниматора
@@ -80,31 +81,30 @@ class DynamicObject extends BaseObject {
     }
 
     /**
-     * Проверяет, есть ли точка столкновения с объектом
-     * @param {Object} object объект
-     * @returns null или [x, y] столкновения
+     * Возвращает точку столкновения с объектом
+     * @param {BaseObject} object объект
      */
     collide(object) {
         let dots = [];
         let len1 = this.collider.length;
 
-        for (let b = 0; b < len; b++) {
-            let x11 = this.collider[b][0], y11 = this.collider[b][1];
-            let x12 = this.collider[(b + 1) % len1][0], y12 = this.collider[(b + 1) % len1][1];
+        for (let b = 0; b < len1; b++) {
+            let dot11 = this.collider[b];
+            let dot12 = this.collider[(b + 1) % len1];
 
             let len2 = object.collider.length;
             for (let i = 0; i < len2; i++) {
-                let x21 = object.collider[i][0], y21 = object.collider[i][1];
-                let x22 = object.collider[(i + 1) % len2][0], y22 = object.collider[(i + 1) % len2][1];
+                let dot21 = object.collider[i];
+                let dot22 = object.collider[(i + 1) % len2];
 
-                let dot = this.collideDot(x11, y11, x12, y12, x21, y21, x22, y22);
+                let dot = this.collideDot(dot11, dot12, dot21, dot22);
                 if (dot != null)
                     dots.push(dot);
             }
         }
 
         // сортировка по дистанции точки пересечения (от меньшего к большему)
-        dots.sort((a, b) => a[2] - b[2]);
+        dots.sort((a, b) => a.length() - b.length());
 
         if (dots.length == 0)
             return null;
@@ -112,53 +112,55 @@ class DynamicObject extends BaseObject {
     }
 
     /**
-     * Вычисляет точку столкновения по двум сторонам
-     * @param {Number} x11 
-     * @param {Number} y11 
-     * @param {Number} x12 
-     * @param {Number} y12 
-     * @param {Number} x21 
-     * @param {Number} y21 
-     * @param {Number} x22 
-     * @param {Number} y22 
-     * @returns null или [x, y, длинна вектора]
+     * Возвращает точку столкновения по двум сторонам
+     * @param {Vector} dot11 
+     * @param {Vector} dot12 
+     * @param {Vector} dot21 
+     * @param {Vector} dot22 
      */
-    collideDot(x11, y11, x12, y12, x21, y21, x22, y22) {
-        let d = (x22-x21)*(y12-y11) - (x12-x11)*(y22-y21);
+    collideDot(dot11, dot12, dot21, dot22) {
+        let d = (dot22.x - dot21.x) * (dot12.y - dot11.y) - (dot12.x - dot11.x) * (dot22.y - dot21.y);
+
         if (d == 0)
             return null;
-        let dt = (x22-x21)*(y21-y11) - (x21-x11)*(y22-y21);
+
+        let dt = (dot22.x - dot21.x) * (dot21.y - dot11.y) - (dot21.x - dot11.x) * (dot22.y - dot21.y);
 
         let t = dt / d;
-        let x = x11 + (x12-x11) * t;
-        let y = y11 + (y12-y11) * t;
-        return [x, y, (x**2 + y**2) ** 0.5];
+        let x = dot11.x + (dot12.x-dot11.x) * t;
+        let y = dot11.y + (dot12.y-dot11.y) * t;
+        return new Vector(x, y);
     }
 
     /**
      * 
-     * @param {Array<Number>} velocity ускорение объекта
+     * @param {Vector} velocity ускорение объекта
      * @param {Number} angularVelocity вращательное ускорение
      */
     #addVelocity(velocity, angularVelocity) {
         //console.log(velocity);
         //console.log(this.reduceAngularVelocity, angularVelocity);
 
-        let scalar = 0; //getScalarProduct(this.velocity, velocity);
+        let cos = this.velocity.cos(velocity);
 
-        this.velocity[0] += velocity[0] * (1 + scalar);
-        this.velocity[1] += velocity[1] * (1 + scalar);
+        //console.log(this.reduceVelocity, cos < 0 ? (1 - cos) : 1)
+
+        this.velocity.add(velocity.multiply(cos < 0 ? (1 - cos) : 1));
+
+        if (this.velocity.length() > DynamicObject.maxVelocity) {
+            this.velocity.normalize().multiply(DynamicObject.maxVelocity);
+        }
 
         this.angularVelocity = Math.min(Math.max(this.angularVelocity + angularVelocity, -DynamicObject.maxAngularVelocity), DynamicObject.maxAngularVelocity);
     }
 
     /**
      * 
-     * @param {Array<Number>} velocity ускорение объекта
+     * @param {Vector} velocity ускорение объекта
      * @param {Number} angularVelocity вращательное ускорение
      */
     addVelocity(velocity, angularVelocity) {
-        this.reduceVelocity = !(velocity[0] || velocity[1]);
+        this.reduceVelocity = !(velocity.x || velocity.y);
         this.reduceAngularVelocity = angularVelocity == 0;
 
         this.#addVelocity(velocity, angularVelocity, false);
@@ -169,10 +171,15 @@ class DynamicObject extends BaseObject {
      * @param {Number} deltaTime время кадра
      */
     update(deltaTime) {
-        this.x += this.velocity[0] * deltaTime;
-        this.y += this.velocity[1] * deltaTime;
+        this.x += this.velocity.x * deltaTime;
+        this.y += this.velocity.y * deltaTime;
 
         this.angle += this.angularVelocity * deltaTime;
+
+        if (this.angle > Math.PI * 2)
+            this.angle -= Math.PI * 2;
+        else if (this.angle < 0)
+            this.angle += Math.PI * 2;
         
         this.obj.style.left = this.x + "px";
         this.obj.style.top = this.y + "px";
@@ -180,8 +187,8 @@ class DynamicObject extends BaseObject {
         this.obj.style.transform = `translate(-50%, -50%) rotate(${this.angle}rad)`
 
         this.#addVelocity(
-            this.reduceVelocity ? [-this.velocity[0] / 2, -this.velocity[1] / 2] : [0, 0],
-            this.reduceAngularVelocity ? -this.angularVelocity / 2: 0
+            this.reduceVelocity ? new Vector(-this.velocity.x, -this.velocity.y).normalize() : Vector.ZERO,
+            this.reduceAngularVelocity ? -this.angularVelocity / 2 : 0
         );
     }
 }
