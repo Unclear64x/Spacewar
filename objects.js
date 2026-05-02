@@ -1,11 +1,20 @@
 class BaseObject {
-    obj;
+    /**@type {HTMLElement} */
+    object;
+    /**@type {Number} */
     x;
+    /**@type {Number} */
     y;
-    width;
+    /**@type {Number} */
+    angle = 0;
+    /**@type {Array<BaseObject>} */
     objects;
-    collider;
+    /**@type {Array<Vector>} */
+    collider = null;
+    /**@type {Animator} */
     animator;
+    /**@type {Array<ChildObject>} */
+    childs = [];
 
     /**
      * 
@@ -18,33 +27,130 @@ class BaseObject {
      * @param {Number} y позиция Y
      */
     constructor(objects, collider, id, animatorParams, startState, x = 0, y = 0) {
-        this.obj = document.createElement("img");
+        this.defaultConstructor(id, animatorParams, startState, x, y);
 
-        this.animator = new Animator(animatorParams, this.obj, startState);
-        this.width = this.obj.naturalWidth;
+        this.objects = objects;
+        
+        for (let i = 0; i < collider.length; i++) {
+            collider[i].multiply(64);
+        }
+        
+        this.collider = collider;
+
+        document.getElementById("space").append(this.object);
+
+        this.displayCollider();
+    }
+
+    displayCollider() {
+        if (this.collider == null)
+            return;
+
+        let polygons = "";
+        for (let i = 0; i < this.collider.length + 1; i++) {
+            let index = i % this.collider.length;
+            polygons += `${this.collider[index].x + 32},${this.collider[index].y + 32} `;
+        }
+
+        let displayCollider = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        displayCollider.setAttribute("class", "debugLine");
+        displayCollider.setAttribute("width", "64");
+        displayCollider.setAttribute("height", "64");
+        
+        let polyLine = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+        polyLine.setAttribute("points", polygons);
+        polyLine.setAttribute("fill", "none");
+        polyLine.setAttribute("stroke", "red");
+        polyLine.setAttribute("stroke-width", "2");
+
+        displayCollider.append(polyLine);
+        this.object.append(displayCollider);
+    }
+
+    /**
+     * 
+     * @param {String} id id
+     * @param {Object} animatorParams параметры для аниматора 
+     * @param {String} startState начальное состояние аниматора
+     * @param {Number} x позиция X
+     * @param {Number} y позиция Y
+     */
+    defaultConstructor(id, animatorParams, startState, x, y) {
+        this.object = document.createElement("div");
+        this.object.id = id;
+        this.object.className = "object";
+
+        this.img = document.createElement("img");
+        this.img.className = "image";
+        this.object.append(this.img);
+
+        this.animator = new Animator(animatorParams, this.img, startState);
 
         this.x = x;
         this.y = y;
+    }
 
-        this.objects = objects;
+    addChild(id, animatorParams, startState, x = 0, y = 0) {
+        let child = new ChildObject(this, id, animatorParams, startState, x, y);
+        this.childs.push(child);
+        this.object.append(child.object);
+    }
 
-        for (let i = 0; i < collider.length; i++) {
-            collider[i].multiply(this.width);
+    globalPosition() {
+        return new Vector(this.x, this.y);
+    }
+
+    globalRotation() {
+        return this.angle;
+    }
+
+    update() {
+        //this.object.style.left = this.x + "px";
+        //this.object.style.top = this.y + "px";
+
+        this.object.style.transform = `translate(${this.x}px, ${this.y}px) rotate(${this.angle}rad)`
+
+        for (let i = 0; i < this.childs.length; i++) {
+            this.childs[i].update();
         }
-        this.collider = collider;
+    }
+}
 
-        this.obj.id = id;
-        this.obj.className = "object";
-        this.obj.style.left = x + "px";
-        this.obj.style.top = y + "px";
+class ChildObject extends BaseObject {
+    /**@type {BaseObject} */
+    parent;
+    /**
+     * 
+     * @param {BaseObject} parent 
+     * @param {String} id 
+     * @param {Object} animatorParams 
+     * @param {String} startState 
+     * @param {Number} x 
+     * @param {Number} y 
+     */
+    constructor(parent, id, animatorParams, startState, x = 0, y = 0) {
+        this.parent = parent;
 
-        document.getElementById("space").append(this.obj);
+        this.defaultConstructor(id, animatorParams, startState, x, y);
+    }
+
+    globalPosition() {
+        let sin = Math.sin(this.parent.angle);
+        let cos = Math.cos(this.parent.angle);
+
+        let x = this.parent.globalPosition() + this.x * cos - this.y * sin;
+        let y = this.parent.globalPosition() + this.x * sin + this.y * cos;
+
+        return new Vector(x, y);
+    }
+
+    globalRotation() {
+        return this.parent.globalRotation() + this.angle;
     }
 }
 
 class DynamicObject extends BaseObject {
     velocity = new Vector(0, 0);
-    angle = 0;
     angularVelocity = 0;
     mass = 1;
     center;
@@ -98,16 +204,35 @@ class DynamicObject extends BaseObject {
                 let dot22 = object.collider[(i + 1) % len2];
 
                 let dot = this.collideDot(dot11, dot12, dot21, dot22);
-                if (dot != null)
-                    dots.push(dot);
+                if (dot != null) {
+                    let n1 = new Vector(dot12.y - dot11.y, -(dot12.x - dot11.x));
+                    let n2 = new Vector(dot22.y - dot21.y, -(dot22.x - dot21.x));
+                    dots.push([dot, n1, n2]);
+                }
             }
         }
 
         // сортировка по дистанции точки пересечения (от меньшего к большему)
-        dots.sort((a, b) => a.length() - b.length());
+        dots.sort((a, b) => a[0].length() - b[0].length());
 
         if (dots.length == 0)
             return null;
+
+        let dot = dots[0][0];
+
+        let r1 = dot.remove(this.center);
+        let r2 = dot.remove(this.object.center);
+
+        let v1 = new Vector(this.velocity.x - this.angularVelocity * r.y, this.velocity.y + this.angularVelocity * r.x);
+        let v2 = new Vector(object.velocity.x - object.angularVelocity * r.y, object.velocity.y + object.angularVelocity * r.x);
+        let u = v1.remove(v2);
+
+        let n1 = dots[0][1];
+        let n2 = dots[0][2];
+
+        let un = u.cross(n1);
+        //let i = -un / (1 / this.mass + 1 / object.mass + )
+
         return dots[0];
     }
 
@@ -181,14 +306,23 @@ class DynamicObject extends BaseObject {
         else if (this.angle < 0)
             this.angle += Math.PI * 2;
         
-        this.obj.style.left = this.x + "px";
-        this.obj.style.top = this.y + "px";
-
-        this.obj.style.transform = `translate(-50%, -50%) rotate(${this.angle}rad)`
+        super.update();
 
         this.#addVelocity(
             this.reduceVelocity ? new Vector(-this.velocity.x, -this.velocity.y).normalize() : Vector.ZERO,
             this.reduceAngularVelocity ? -this.angularVelocity / 2 : 0
         );
+    }
+}
+
+class DamageableObject extends DynamicObject {
+    /**@type {Number} */
+    health = 100;
+
+    damage(value) {
+        health -= value;
+
+        if (health <= 0)
+            document.getElementById("space").removeChild(this.object);
     }
 }

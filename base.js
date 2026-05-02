@@ -59,7 +59,7 @@ class Animator {
      * @param {String} state состояние
      */
     setState(state) {
-        if (state == this.state)
+        if (state === this.state)
             return;
 
         this.state = state;
@@ -69,16 +69,18 @@ class Animator {
         if (this.timer != 0)
             clearInterval(this.timer);
 
+        this.nextFrame();
         if (this.durations[state] != 0) {
-            this.timer = setInterval(() => {
-                this.obj.src = this.states[state][this.frame].src;
-                this.frame = (this.frame + 1) % this.frames;
-            }, this.durations[state]);
+            this.timer = setInterval(this.nextFrame.bind(this), this.durations[state]);
         }
         else {
             this.timer = 0;
-            this.obj.src = this.states[state][this.frame].src;
         }
+    }
+
+    nextFrame() {
+        this.obj.src = this.states[this.state][this.frame++].src;
+        this.frame %= this.frames;
     }
 
     /**

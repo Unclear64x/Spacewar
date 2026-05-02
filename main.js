@@ -18,6 +18,7 @@ let rightVelocity = new Vector(0, 0);
 let angularVelocity = 0;
 let cursor = new Vector(0, 0);
 
+let meteorite;
 
 addEventListeners();
 
@@ -66,7 +67,7 @@ function playerInput(delta) {
         velocity.remove(rightVelocity);
     }
 
-    player.addVelocity(velocity.normalize(), angularVelocity);
+    player.input(velocity.normalize(), angularVelocity);
 }
 
 function centerAtPlayer() {
@@ -75,11 +76,20 @@ function centerAtPlayer() {
     space.style.transform = `translate(${cameraX}px, ${cameraY}px)`;
 }
 
+function physycs() {
+    for (let i = 0; i < objects.length - 1; i++) {
+        for (let b = i + 1; b < objects.length - 1; i++) {
+            objects[i].collide(objects[b]);
+        }
+    }
+}
+
 function addEventListeners() {
     window.addEventListener("DOMContentLoaded", (e) => {
         space = document.getElementById("space");
 
-        player = new Player(objects, 10000, 10000);
+        player = new Player(objects, 200000 / 2, 200000 / 2);
+        meteorite = new Meteorite(objects, player.x + 200, player.y);
 
         //colliders.push(new Door(colliders, interactable, 200, 0));
 

@@ -33,8 +33,8 @@ let shipAnimation = {
     }
 }
 
-let asteroidAnimation = {
-    "root": "asteroid",
+let meteoriteAnimation = {
+    "root": "meteorite",
     "states": {
         "none": [1, 0],
         "damaged": [1, 0]
