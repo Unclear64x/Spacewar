@@ -19,6 +19,7 @@ let angularVelocity = 0;
 let cursor = new Vector(0, 0);
 
 let meteorite;
+let physycsDot;
 
 addEventListeners();
 
@@ -28,6 +29,8 @@ function update(currentTime) {
 
     playerInput(delta);
     centerAtPlayer();
+
+    physycs();
 
     for (let i = 0; i < objects.length; i++) {
         objects[i].update(delta);
@@ -77,9 +80,18 @@ function centerAtPlayer() {
 }
 
 function physycs() {
-    for (let i = 0; i < objects.length - 1; i++) {
-        for (let b = i + 1; b < objects.length - 1; i++) {
-            objects[i].collide(objects[b]);
+    for (let i = 0; i < objects.length; i++) {
+        for (let b = i + 1; b < objects.length; b++) {
+            let dot = objects[i].collide(objects[b]);
+            
+            if (!physycsDot)
+                physycsDot = new BaseObject(objects, [], "dot", dotAnimation, "none");
+
+            if (dot != null) {
+                physycsDot.x = dot[0].x;
+                physycsDot.y = dot[0].y;
+                physycsDot.update();
+            }
         }
     }
 }
@@ -90,6 +102,8 @@ function addEventListeners() {
 
         player = new Player(objects, 200000 / 2, 200000 / 2);
         meteorite = new Meteorite(objects, player.x + 200, player.y);
+        
+
 
         //colliders.push(new Door(colliders, interactable, 200, 0));
 

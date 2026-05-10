@@ -165,6 +165,7 @@ class Vector {
     set(x, y) {
         this.x = x;
         this.y = y;
+        return this;
     }
 
     /**
@@ -174,6 +175,17 @@ class Vector {
     add(vector) {
         this.x += vector.x;
         this.y += vector.y;
+        return this;
+    }
+
+    /**
+     * Добавление чисел к координатам
+     * @param {Number} x 
+     * @param {Number} y 
+     */
+    add2(x, y) {
+        this.x += x;
+        this.y += y;
         return this;
     }
 
@@ -206,5 +218,28 @@ class Vector {
         this.x *= numberX;
         this.y *= numberY;
         return this;
+    }
+
+    /**
+     * Поворачивает вектор
+     * @param {Number} angle 
+     */
+    rotate(angle) {
+        let cos = Math.cos(angle);
+        let sin = Math.sin(angle);
+
+        let x = this.x;
+
+        this.x = x * cos - this.y * sin;
+        this.y = x * sin + this.y * cos;
+        
+        return this;
+    }
+
+    /**
+     * Возвращает копию вектора
+     */
+    new() {
+        return new Vector(this.x, this.y);
     }
 }

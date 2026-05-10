@@ -40,3 +40,10 @@ let meteoriteAnimation = {
         "damaged": [1, 0]
     }
 }
+
+let dotAnimation = {
+    "root": "dot",
+    "states": {
+        "none": [1, 0]
+    }
+}
