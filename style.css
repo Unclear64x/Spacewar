@@ -28,10 +28,17 @@ body {
     transform: translate(-50%, -50%);
 }
 
-.debugLine {
+.debugSpace {
     position: absolute;
 
     width: 200000px;
     height: 200000px;
     /*transform: translate(-50%, -50%);*/
+}
+
+.debugDot {
+    border-radius: 50%;
+    width: 5px;
+    height: 5px;
+    transform: translate(-50%, -50%);
 }

@@ -71,7 +71,7 @@ class Animator {
 
         this.nextFrame();
         if (this.durations[state] != 0) {
-            this.timer = setInterval(this.nextFrame.bind(this), this.durations[state]);
+            this.timer = setInterval(() => this.nextFrame(), this.durations[state]);
         }
         else {
             this.timer = 0;
@@ -241,5 +241,67 @@ class Vector {
      */
     new() {
         return new Vector(this.x, this.y);
+    }
+}
+
+class Debug {
+    static enabled = true;
+
+    static #displayedLinesObject;
+    static #displayedLines = {};
+
+    static #displayedDots = {};
+
+    /**
+     * Отображает линию по двум точкам в глобальных координатах
+     * @param {any} lineId 
+     * @param {Vector} point1 
+     * @param {Vector} point2 
+     * @param {String} color 
+     * @returns 
+     */
+    static displayLine(lineId, point1, point2, color) {
+        if (!Debug.enabled)
+            return;
+
+        if (!Debug.#displayedLinesObject) {
+            Debug.#displayedLinesObject = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+            Debug.#displayedLinesObject.setAttribute("class", "debugSpace");
+            document.getElementById("space").append(Debug.#displayedLinesObject);
+        }
+
+        if (!Debug.#displayedLines[lineId]) {
+            let polyLine = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+            polyLine.setAttribute("fill", "none");
+            polyLine.setAttribute("stroke",  color);
+            polyLine.setAttribute("stroke-width", "2");
+            Debug.#displayedLinesObject.append(polyLine);
+            Debug.#displayedLines[lineId] = polyLine;
+        }
+
+        Debug.#displayedLines[lineId].setAttribute("points", `${point1.x},${point1.y} ${point2.x},${point2.y}`);
+    }
+
+    /**
+     * Отображает токчку в глобальных координатах
+     * @param {any} dotId 
+     * @param {Vector} point
+     * @param {String} color 
+     * @returns 
+     */
+    static displayDot(dotId, point, color) {
+        if (!Debug.enabled)
+            return;
+
+        if (!Debug.#displayedDots[dotId]) {
+            let dot = new BaseObject(objects, [], dotId, null, null);
+            dot.object.setAttribute("class", "debugDot");
+            dot.object.style.backgroundColor = color;
+            Debug.#displayedDots[dotId] = dot;
+        }
+
+        Debug.#displayedDots[dotId].x = point.x;
+        Debug.#displayedDots[dotId].y = point.y;
+        Debug.#displayedDots[dotId].update();
     }
 }

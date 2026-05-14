@@ -16,9 +16,13 @@ class BaseObject {
     /**@type {Array<ChildObject>} */
     childs = [];
 
+    static #totalId = 0;
 
-    displayedCollider;
-    displayedColliderPoligons = [];
+    /**@type {Number} */
+    id = 0;
+
+    displayedLinesObject;
+    displayedLines = {};
 
     /**
      * 
@@ -31,6 +35,8 @@ class BaseObject {
      * @param {Number} y позиция Y
      */
     constructor(objects, collider, id, animatorParams, startState, x = 0, y = 0) {
+        this.id = BaseObject.#totalId++;
+
         this.defaultConstructor(id, animatorParams, startState, x, y);
 
         this.objects = objects;
@@ -42,44 +48,6 @@ class BaseObject {
         this.collider = collider;
 
         document.getElementById("space").append(this.object);
-    }
-
-    displayCollider(i, d1, d2) {
-        if (this.collider == null)
-            return;
-
-        if (!this.displayedCollider) {
-            this.displayedCollider = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-            this.displayedCollider.setAttribute("class", "debugLine");
-            document.getElementById("space").append(this.displayedCollider);
-        }
-
-        if (!this.displayedColliderPoligons[i]) {
-            let polyLine = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-            polyLine.setAttribute("fill", "none");
-            polyLine.setAttribute("stroke", "red");
-            polyLine.setAttribute("stroke-width", "2");
-            this.displayedCollider.append(polyLine);
-            this.displayedColliderPoligons[i] = polyLine;
-        }
-
-        this.displayedColliderPoligons[i].setAttribute("points", `${d1.x},${d1.y} ${d2.x},${d2.y}`);
-
-        // let polygons = "";
-        // for (let i = 0; i < this.collider.length + 1; i++) {
-        //     let index = i % this.collider.length;
-        //     polygons += `${this.collider[index].x + 32},${this.collider[index].y + 32} `;
-        // }
-
-        // let displayCollider = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        // displayCollider.setAttribute("class", "debugLine");
-        // displayCollider.setAttribute("width", "200000");
-        // displayCollider.setAttribute("height", "200000");
-        
-        
-
-        // displayCollider.append(polyLine);
-        // document.getElementById("space").append(displayCollider);
     }
 
     /**
@@ -95,14 +63,17 @@ class BaseObject {
         this.object.id = id;
         this.object.className = "object";
 
+        this.x = x;
+        this.y = y;
+
+        if (!animatorParams || !startState)
+            return;
+
         this.img = document.createElement("img");
         this.img.className = "image";
         this.object.append(this.img);
 
         this.animator = new Animator(animatorParams, this.img, startState);
-
-        this.x = x;
-        this.y = y;
     }
 
     addChild(id, animatorParams, startState, x = 0, y = 0) {
@@ -111,10 +82,12 @@ class BaseObject {
         this.object.append(child.object);
     }
 
+    /** @returns {Vector} */
     globalPosition() {
         return new Vector(this.x, this.y);
     }
 
+    /**@returns {Number} */
     globalRotation() {
         return this.angle;
     }
@@ -168,7 +141,10 @@ class DynamicObject extends BaseObject {
     velocity = new Vector(0, 0);
     angularVelocity = 0;
     mass = 1;
+    /**@type {Vector} */
     center;
+    /**@type {Number} */
+    momentInercia;
 
     velocityMultiplier = 2;
 
@@ -197,7 +173,9 @@ class DynamicObject extends BaseObject {
 
         objects.push(this);
 
-        this.center = getCentreOfMass(collider);
+        let colliderInfo = getColliderInfo(collider);
+        this.center = colliderInfo[0];
+        this.momentInercia = colliderInfo[1] * mass;
         this.mass = mass;
 
         console.log(this.x, this.y);
@@ -215,12 +193,12 @@ class DynamicObject extends BaseObject {
         for (let b = 0; b < len1; b++) {
             let dot11 = this.collider[b].new().rotate(this.angle).add2(this.x, this.y);
             let dot12 = this.collider[(b + 1) % len1].new().rotate(this.angle).add2(this.x, this.y);
-            this.displayCollider(b, dot11, dot12);
+            Debug.displayLine(`${this.id} ${b}`, dot11, dot12, "red");
 
             for (let i = 0; i < len2; i++) {
                 let dot21 = object.collider[i].new().rotate(object.angle).add2(object.x, object.y);
                 let dot22 = object.collider[(i + 1) % len2].new().rotate(object.angle).add2(object.x, object.y);
-                object.displayCollider(i, dot21, dot22);
+                Debug.displayLine(`${object.id} ${i}`, dot21, dot22, "red");
 
                 let dot = this.collideDot(dot11, dot12, dot21, dot22);
                 if (dot != null) {
@@ -238,9 +216,34 @@ class DynamicObject extends BaseObject {
             return null;
 
         let dot = dots[0][0];
+        Debug.displayDot("collideDot", dot, "aqua");
 
-        // let r1 = dot.remove(this.center);
-        // let r2 = dot.remove(object.center);
+        let r1 = dot.new().remove(this.center.new().add(this.globalPosition()));
+        let r2 = dot.new().remove(object.center.new().add(object.globalPosition()));
+
+        let impulse = this.velocity.new().remove(object.velocity);
+        let angularImpulse1 = impulse.cos(r1) * impulse.new().multiply(r1.scalar(impulse) / (impulse.length() ** 2)).length() * (200 / impulse.length());
+        let angularImpulse2 = impulse.cos(r2) * impulse.new().multiply(r2.scalar(impulse) / (impulse.length() ** 2)).length() * (200 / impulse.length());
+
+        Debug.displayLine(`${this.id} r`, this.center.new().add(this.globalPosition()), r1.new().add(this.globalPosition()), "gold");
+        Debug.displayLine(`${object.id} r`, object.center.new().add(object.globalPosition()), r2.new().add(object.globalPosition()), "gold");
+
+        Debug.displayLine(`impulse`, dot, impulse.new().add(dot), "brown");
+
+        this.addVelocity(impulse.new().multiply(-1), angularImpulse1);
+        object.addVelocity(impulse, angularImpulse2);
+
+        console.log(angularImpulse1, angularImpulse2);
+
+        // let F = this.velocity.new().remove(object.velocity);
+
+        // let rAng1 = r1.cross(F);
+
+        // let vRel = 
+
+        // let e = 0.5;
+        // let N = -(1 + e)
+
 
         // let v1 = new Vector(this.velocity.x - this.angularVelocity * r1.y, this.velocity.y + this.angularVelocity * r1.x);
         // let v2 = new Vector(object.velocity.x - object.angularVelocity * r2.y, object.velocity.y + object.angularVelocity * r2.x);
@@ -252,7 +255,7 @@ class DynamicObject extends BaseObject {
         // let un = u.cross(n1);
         //let i = -un / (1 / this.mass + 1 / object.mass + )
 
-        console.log(dot.x, dot.y);
+        //console.log(dot.x, dot.y);
         return dots[0];
     }
 
@@ -331,6 +334,8 @@ class DynamicObject extends BaseObject {
             this.angle -= Math.PI * 2;
         else if (this.angle < 0)
             this.angle += Math.PI * 2;
+
+        Debug.displayLine(`${this.id} velocity`, this.globalPosition(), this.globalPosition().add(this.velocity), "white")
         
         super.update();
 

@@ -83,15 +83,6 @@ function physycs() {
     for (let i = 0; i < objects.length; i++) {
         for (let b = i + 1; b < objects.length; b++) {
             let dot = objects[i].collide(objects[b]);
-            
-            if (!physycsDot)
-                physycsDot = new BaseObject(objects, [], "dot", dotAnimation, "none");
-
-            if (dot != null) {
-                physycsDot.x = dot[0].x;
-                physycsDot.y = dot[0].y;
-                physycsDot.update();
-            }
         }
     }
 }
