@@ -237,6 +237,16 @@ class Vector {
     }
 
     /**
+     * Делает вектор перпендикулярным себе (нормаль)
+     */
+    perpend() {
+        let x = this.x;
+        this.x = -this.y;
+        this.y = x;
+        return this;
+    }
+
+    /**
      * Возвращает копию вектора
      */
     new() {
@@ -275,6 +285,7 @@ class Debug {
             polyLine.setAttribute("fill", "none");
             polyLine.setAttribute("stroke",  color);
             polyLine.setAttribute("stroke-width", "2");
+            polyLine.setAttribute("id", lineId);
             Debug.#displayedLinesObject.append(polyLine);
             Debug.#displayedLines[lineId] = polyLine;
         }
@@ -297,6 +308,7 @@ class Debug {
             let dot = new BaseObject(objects, [], dotId, null, null);
             dot.object.setAttribute("class", "debugDot");
             dot.object.style.backgroundColor = color;
+            dot.object.setAttribute("id", dotId);
             Debug.#displayedDots[dotId] = dot;
         }
 

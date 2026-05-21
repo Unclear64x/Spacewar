@@ -14,7 +14,7 @@ class BaseObject {
     /**@type {Animator} */
     animator;
     /**@type {Array<ChildObject>} */
-    childs = [];
+    children = [];
 
     static #totalId = 0;
 
@@ -78,8 +78,9 @@ class BaseObject {
 
     addChild(id, animatorParams, startState, x = 0, y = 0) {
         let child = new ChildObject(this, id, animatorParams, startState, x, y);
-        this.childs.push(child);
+        this.children.push(child);
         this.object.append(child.object);
+        return child;
     }
 
     /** @returns {Vector} */
@@ -98,8 +99,10 @@ class BaseObject {
 
         this.object.style.transform = `translate(${this.x}px, ${this.y}px) rotate(${this.angle}rad)`
 
-        for (let i = 0; i < this.childs.length; i++) {
-            this.childs[i].update();
+        Debug.displayLine(`${this.id} forward`, this.globalPosition(), this.globalPosition().add2(100 * Math.cos(this.angle), 100 * Math.sin(this.angle)), "purple");
+
+        for (let i = 0; i < this.children.length; i++) {
+            this.children[i].update();
         }
     }
 }
@@ -117,17 +120,17 @@ class ChildObject extends BaseObject {
      * @param {Number} y 
      */
     constructor(parent, id, animatorParams, startState, x = 0, y = 0) {
-        this.parent = parent;
+        super([], [], id, animatorParams, startState, x, y);
 
-        this.defaultConstructor(id, animatorParams, startState, x, y);
+        this.parent = parent;
     }
 
     globalPosition() {
         let sin = Math.sin(this.parent.angle);
         let cos = Math.cos(this.parent.angle);
 
-        let x = this.parent.globalPosition() + this.x * cos - this.y * sin;
-        let y = this.parent.globalPosition() + this.x * sin + this.y * cos;
+        let x = this.parent.globalPosition().x + this.x * cos - this.y * sin;
+        let y = this.parent.globalPosition().y + this.x * sin + this.y * cos;
 
         return new Vector(x, y);
     }
@@ -173,9 +176,9 @@ class DynamicObject extends BaseObject {
 
         objects.push(this);
 
-        let colliderInfo = getColliderInfo(collider);
+        let colliderInfo = getColliderInfo(collider, mass);
         this.center = colliderInfo[0];
-        this.momentInercia = colliderInfo[1] * mass;
+        this.momentInercia = colliderInfo[1];
         this.mass = mass;
 
         console.log(this.x, this.y);
@@ -183,7 +186,7 @@ class DynamicObject extends BaseObject {
 
     /**
      * Возвращает точку столкновения с объектом
-     * @param {BaseObject} object объект
+     * @param {DynamicObject} object объект
      */
     collide(object) {
         let dots = [];
@@ -200,10 +203,10 @@ class DynamicObject extends BaseObject {
                 let dot22 = object.collider[(i + 1) % len2].new().rotate(object.angle).add2(object.x, object.y);
                 Debug.displayLine(`${object.id} ${i}`, dot21, dot22, "red");
 
-                let dot = this.collideDot(dot11, dot12, dot21, dot22);
+                let dot = findDot(dot11, dot12, dot21, dot22);
                 if (dot != null) {
-                    let n1 = new Vector(dot12.y - dot11.y, -(dot12.x - dot11.x));
-                    let n2 = new Vector(dot22.y - dot21.y, -(dot22.x - dot21.x));
+                    let n1 = new Vector(dot12.x - dot.x, dot12.y - dot.y).perpend().add(dot);
+                    let n2 = new Vector(dot22.x - dot.x, dot22.y - dot.y).perpend().add(dot);
                     dots.push([dot, n1, n2]);
                 }
             }
@@ -215,75 +218,126 @@ class DynamicObject extends BaseObject {
         if (dots.length == 0)
             return null;
 
+        Debug.displayDot("collideDot", dots[0][0], "blue");
+        Debug.displayLine("normal1", dots[0][0], dots[0][1], "orange");
+        Debug.displayLine("normal2", dots[0][0], dots[0][2], "aqua");
+
         let dot = dots[0][0];
-        Debug.displayDot("collideDot", dot, "aqua");
+        let n1 = dots[0][1].remove(dot).normalize();
+        let n2 = dots[0][2].remove(dot).normalize();
+        let n = n1.new().multiply(40).add(n2.multiply(40)).add(dot);
 
-        let r1 = dot.new().remove(this.center.new().add(this.globalPosition()));
-        let r2 = dot.new().remove(object.center.new().add(object.globalPosition()));
-
-        let impulse = this.velocity.new().remove(object.velocity);
-        let angularImpulse1 = impulse.cos(r1) * impulse.new().multiply(r1.scalar(impulse) / (impulse.length() ** 2)).length() * (200 / impulse.length());
-        let angularImpulse2 = impulse.cos(r2) * impulse.new().multiply(r2.scalar(impulse) / (impulse.length() ** 2)).length() * (200 / impulse.length());
-
-        Debug.displayLine(`${this.id} r`, this.center.new().add(this.globalPosition()), r1.new().add(this.globalPosition()), "gold");
-        Debug.displayLine(`${object.id} r`, object.center.new().add(object.globalPosition()), r2.new().add(object.globalPosition()), "gold");
-
-        Debug.displayLine(`impulse`, dot, impulse.new().add(dot), "brown");
-
-        this.addVelocity(impulse.new().multiply(-1), angularImpulse1);
-        object.addVelocity(impulse, angularImpulse2);
-
-        console.log(angularImpulse1, angularImpulse2);
-
-        // let F = this.velocity.new().remove(object.velocity);
-
-        // let rAng1 = r1.cross(F);
-
-        // let vRel = 
-
-        // let e = 0.5;
-        // let N = -(1 + e)
+        Debug.displayLine("n", dot, n, "lime");
 
 
-        // let v1 = new Vector(this.velocity.x - this.angularVelocity * r1.y, this.velocity.y + this.angularVelocity * r1.x);
-        // let v2 = new Vector(object.velocity.x - object.angularVelocity * r2.y, object.velocity.y + object.angularVelocity * r2.x);
-        // let u = v1.remove(v2);
+        let globalCenter = this.center.new().rotate(this.angle).add2(this.x, this.y);
+        let globalObjectCenter = object.center.new().rotate(object.angle).add2(object.x, object.y);
 
-        // let n1 = dots[0][1];
-        // let n2 = dots[0][2];
+        let radiusVectorCenterToDot = dot.new().remove(globalCenter);
+        let objectRadiusVectorCenterToDot = dot.new().remove(globalObjectCenter);
 
-        // let un = u.cross(n1);
-        //let i = -un / (1 / this.mass + 1 / object.mass + )
+        let F = this.velocity.new().remove(object.velocity);
+        let angular = radiusVectorCenterToDot.cross(F) / this.mass;
+        let objectAngular = objectRadiusVectorCenterToDot.cross(F) / object.mass;
 
-        //console.log(dot.x, dot.y);
+        let j = 2 * this.velocity.new().remove(object.velocity).scalar(n1.normalize()) / ((1 / this.mass) + (1 / object.mass)); 
+
+        // let vel = this.velocity.new().remove(dot.new().remove(object.globalPosition()));
+        // this.addVelocity(object.velocity.new().remove(dot.new().remove(this.globalPosition())), angular);
+        // object.addVelocity(vel, objectAngular);
+
+        this.addVelocity(n1.new().multiply(-j / this.mass), angular);
+        object.addVelocity(n1.new().multiply(j / object.mass), objectAngular);
+        console.log(n1, j);
+
+        // ненавижу физику
+
+        // let globalCenter = this.center.new().rotate(this.angle).add2(this.x, this.y);
+        // let globalObjectCenter = object.center.new().rotate(object.angle).add2(object.x, object.y);
+
+        // let radiusVectorCenterToDot = dot.new().remove(globalCenter);
+        // let objectRadiusVectorCenterToDot = dot.new().remove(globalObjectCenter);
+
+        // let relativeVelocity = this.velocity.new().remove(object);
+        // let moveAngle = relativeVelocity.scalar(n);
+        
+        // let partOfMass = 1 / this.mass;
+        // let objectPartOfMass = 1 / object.mass;
+
+        // let partOfInercia = 1 / this.momentInercia;
+        // let objectPartOfInercia = 1 / object.momentInercia;
+
+        // let moveVector = radiusVectorCenterToDot.cross(n);
+        // let objectMoveVector = objectRadiusVectorCenterToDot.cross(n);
+
+        // let d = partOfMass + objectPartOfMass + (moveVector ** 2) * partOfInercia + (objectMoveVector ** 2) * objectPartOfInercia;
+
+        // if (d == 0)
+        //     return;
+
+        // let uprugost = 0.5;
+        // let impulse = n.multiply(-(1 + uprugost) * moveAngle / d);
+
+        // let deltaMomentOfInercia = radiusVectorCenterToDot.cross(impulse);
+        // let objectDeltaMomentOfInercia = objectRadiusVectorCenterToDot.cross(impulse);
+
+        // Debug.displayLine(`${this.id} imp`, this.globalPosition(), impulse.new().add(this.globalPosition()), "yellow");
+        // Debug.displayLine(`${object.id} imp`, object.globalPosition(), impulse.new().multiply(-1).add(object.globalPosition()), "yellow");
+
+        // this.addVelocity(impulse, deltaMomentOfInercia);
+        // object.addVelocity(impulse.new().multiply(-1), objectDeltaMomentOfInercia);
+
         return dots[0];
     }
 
     /**
-     * Возвращает точку столкновения по двум сторонам
-     * @param {Vector} dot11 
-     * @param {Vector} dot12 
-     * @param {Vector} dot21 
-     * @param {Vector} dot22 
+     * 
+     * @param {DynamicObject} object 
+     * @param {Vector} dot 
+     * @param {Vector} n1 
+     * @param {Vector} n2 
      */
-    collideDot(dot11, dot12, dot21, dot22) {
-        let d = (dot22.x - dot21.x) * (dot12.y - dot11.y) - (dot12.x - dot11.x) * (dot22.y - dot21.y);
+    calculateCollision(object, dot, n1, n2) {
+        let n = n1.new().add(n2).normalize();
+        if (n.length() == 0)
+            return;
 
-        if (Math.abs(d) < 0.0001)
-            return null;
+        let cA = this.center.new().rotate(this.angle).add2(this.x, this.y);
+        let cB = object.center.new().rotate(object.angle).add2(object.x, object.y);
 
-        let dt = (dot22.x - dot21.x) * (dot21.y - dot11.y) - (dot21.x - dot11.x) * (dot22.y - dot21.y);
-        let du = (dot12.x - dot11.x) * (dot21.y - dot11.y) - (dot12.y - dot11.y) * (dot21.x - dot11.x);
+        let rA = dot.new().remove(cA);
+        let rB = dot.new().remove(cB);
 
-        let t = dt / d;
-        let u = du / d;
-        if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
-            let x = dot11.x + (dot12.x - dot11.x) * t;
-            let y = dot11.y + (dot12.y - dot11.y) * t;
-            return new Vector(x, y);
-        }
+        let vA = this.velocity.new().add(rA.new().perpend().multiply(this.angularVelocity));
+        let vB = object.velocity.new().add(rB.new().perpend().multiply(object.angularVelocity));
 
-        return null;
+        let vRel = vA.remove(vB);
+        let vrn = vRel.scalar(n);
+
+        let invMassA = 1 / this.mass;
+        let invMassB = 1 / object.mass;
+
+        let invIA = 1 / this.momentInercia;
+        let invIB = 1 / object.momentInercia;
+
+        let rAxn = rA.cross(n);
+        let rBxn = rB.cross(n);
+
+        let denom = invMassA + invMassB + (rAxn ** 2) * invIA + (rBxn ** 2) * invIB;
+        if (denom == 0)
+            return;
+
+        let e = 1;
+
+        let j = -(1 + e) * vrn / denom;
+        let impulse = n.new().multiply(j);
+
+        console.log(invMassA, invMassB, j);
+
+        this.velocity.multiply(0);
+        object.velocity.multiply(0);
+        this.addVelocity(impulse.new().multiply(invMassA), rA.cross(impulse) + invIA);
+        object.addVelocity(impulse.new().multiply(-invMassB), rB.cross(impulse) + invIB);
     }
 
     /**

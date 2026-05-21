@@ -16,10 +16,9 @@ function removeFromArray(array, object) {
  * Вычисляет центр масс и момент инерции
  * @param {Array<Vector>} collider 
  */
-function getColliderInfo(collider) {
+function getColliderInfo(collider, mass) {
     let S = 0;
     let x = 0, y = 0;
-    let I = 0;
 
     let len = collider.length;
 
@@ -32,23 +31,22 @@ function getColliderInfo(collider) {
         S += scalar;
         x += (curr.x + next.x) * scalar;
         y += (curr.y + next.y) * scalar;
-
-        I += scalar * (next.x * next.x + next.x * curr.x + curr.x * curr.x) +
-                      (next.y * next.y + next.y * curr.y + curr.y * curr.y);
     }
-    
-    I /= 12;
 
-    if (S == 0)
-        return [new Vector(0, 0), I];
+    x /= S == 0 ? 0 : 3 * S;
+    y /= S == 0 ? 0 : 3 * S;
 
-    // S = 1/2 * Сумма( скалярные произведения точек )
-    // Cx = 1/6 * 1/2S * Сумма( (x1 + x2) * скалярное произведение )
-    // просто все коэффициенты перемножил и получил 3
-    x /= 3 * S;
-    y /= 3 * S
+    let center = new Vector(x, y);
 
-    return [new Vector(x, y), I];
+    let sum = 0;
+    for (let i = 0; i < len; i++) {
+        let r = collider[i].new().remove(center);
+        sum += r.x ** 2 + r.y ** 2;
+    }
+
+    let I = sum * mass / len;
+
+    return [center, I > 0 ? I : 1];
 }
 
 /**
@@ -60,4 +58,43 @@ function getColliderInfo(collider) {
 function lerp(start, end, k) {
     console.log(`${start} + (${end - start}) * ${k}`);
     return start + (end - start) * k;
+}
+
+/**
+ * Ищет точку пересечения линий
+ * @param {Vector} dot11 
+ * @param {Vector} dot12 
+ * @param {Vector} dot21 
+ * @param {Vector} dot22 
+ */
+function findDot(dot11, dot12, dot21, dot22) {
+    let d = (dot22.x - dot21.x) * (dot12.y - dot11.y) - (dot12.x - dot11.x) * (dot22.y - dot21.y);
+
+    if (Math.abs(d) == 0)
+        return null;
+
+    let dt = (dot22.x - dot21.x) * (dot21.y - dot11.y) - (dot21.x - dot11.x) * (dot22.y - dot21.y);
+    let du = (dot12.x - dot11.x) * (dot21.y - dot11.y) - (dot12.y - dot11.y) * (dot21.x - dot11.x);
+
+    let t = dt / d;
+    let u = du / d;
+    if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+        let x = dot11.x + (dot12.x - dot11.x) * t;
+        let y = dot11.y + (dot12.y - dot11.y) * t;
+        return new Vector(x, y);
+    }
+
+    return null;
+}
+
+/**
+ * 
+ * @param {Vector} dot1 
+ * @param {Vector} dot2 
+ * @param {Vector} polygon 
+ */
+function hasDot(dot1, dot2, polygon) {
+    let d = (dot2.x - dot1.x) * (polygon.y - dot1.y) - (dot2.y - dot1.y) * (polygon.x - dot1.x);
+
+    return d <= 0;
 }

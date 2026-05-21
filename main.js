@@ -17,6 +17,7 @@ let forwardVelocity = new Vector(0, 0);
 let rightVelocity = new Vector(0, 0);
 let angularVelocity = 0;
 let cursor = new Vector(0, 0);
+let cursorGlobal = new Vector(0, 0);
 
 let meteorite;
 let physycsDot;
@@ -71,6 +72,7 @@ function playerInput(delta) {
     }
 
     player.input(velocity.normalize(), angularVelocity);
+    player.lookAt(cursorGlobal);
 }
 
 function centerAtPlayer() {
@@ -80,9 +82,24 @@ function centerAtPlayer() {
 }
 
 function physycs() {
+    let collided = {};
+
     for (let i = 0; i < objects.length; i++) {
+        if (!collided[i])
+            collided[i] = [];
         for (let b = i + 1; b < objects.length; b++) {
+            if (!collided[b])
+                collided[b] = [];
+
+            if (collided[i].includes(b))
+                continue;
+
             let dot = objects[i].collide(objects[b]);
+
+            if (dot) {
+                collided[b].push(i);
+                collided[i].push(b);
+            }
         }
     }
 }
@@ -108,5 +125,6 @@ function addEventListeners() {
     });
     window.addEventListener("mousemove", (e) => {
         cursor.set(e.clientX - (window.innerWidth / 2), e.clientY - (window.innerHeight / 2));
+        cursorGlobal.add(player.globalPosition());
     })
 }
