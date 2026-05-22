@@ -64,29 +64,100 @@ class Ship extends DamageableObject {
      * @param {ChildObject} gun 
      */
     #fire(gun) {
-        console.log("fire!");
+        new Bullet(this, gun.globalPosition.x, gun.globalPosition.y, gun.forward, 10);
     }
 }
 
-class Bullet extends BaseObject {
+class Bullet extends DynamicObject {
     /**@type {HTMLElement} */
     bullet;
     /**@type {Vector} */
-    start
+    start;
+    /**@type {Number} */
+    damage;
+    /**@type {DynamicObject} */
+    owner
 
-    constructor(x, y, forward) {
-        super(null, null, null, x, y);
+    timer = 0;
+
+    width = 1;
+
+    static Speed = 1000;
+
+    /**
+     * 
+     * @param {Number} x 
+     * @param {Number} y 
+     * @param {Vector} forward 
+     * @param {Number} damage 
+     */
+    constructor(owner, x, y, forward, damage) {
+        let collider = [
+            new Vector(0, 0),
+            new Vector(-0.5, 0)
+        ]
+        super(collider, null, null, null, x, y);
         
+        this.owner = owner;
+
         this.bullet = document.createElement("div");
         this.bullet.className = "bullet";
-        this.angle = Math.atan(forward.y, forward.x);
+        this.object.append(this.bullet);
+        this.angle = Math.atan2(forward.y, forward.x);
 
         this.start = new Vector(x, y);
+
+        this.damage = damage;
+
+        this.velocity.set2(forward.new().multiply(Bullet.Speed));
+
+        console.log("BULLET");
+
+        this.timer = setTimeout(() => this.destroy(), 1000);
     }
 
-    update() {
-        super.update();
+    update(deltaTime) {
+        super.update(deltaTime);
         
+        if (this.width >= 100 && !this.destroyed)
+            return;
+
+        this.width += deltaTime * 300 * (this.destroyed ? -2 : 1);
+
+        if (this.width <= 0) {
+            this.destroyed = false;
+            super.destroy();
+            return;
+        }
+
+        this.bullet.style.width = `${this.width}px`;
+    }
+
+    /**
+     * 
+     * @param {Vector} dot
+     * @param {DamageableObject} object 
+     */
+    onCollide(dot, object) {
+        let isBullet = object instanceof Bullet;
+        let isOwner = object == this.owner;
+        let isDamagable = object instanceof DamageableObject;
+
+        if (!isBullet && !isOwner && isDamagable) {
+            clearTimeout(this.timer);
+            object.damage(this.damage);
+            this.destroy();
+        }
+
+        return !isBullet && !isOwner && isDamagable;
+    }
+
+    _addVelocity(velocity, angularVelocity) {} // чтобы обойти ограничение ускорения
+
+    destroy() {
+        this.destroyed = true;
+        removeFromArray(World.DynamicObjects, this);
+        this.velocity.set(0, 0);
     }
 }
 

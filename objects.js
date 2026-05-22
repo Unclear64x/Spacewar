@@ -21,8 +21,7 @@ class BaseObject {
     /**@type {Number} */
     id = 0;
 
-    displayedLinesObject;
-    displayedLines = {};
+    destroyed = false;
 
     /**
      * 
@@ -94,11 +93,16 @@ class BaseObject {
     }
 
     destroy() {
+        if (this.destroyed)
+            return;
+        this.destroyed = true;
+
         for (let i = 0; i < this.children; i++) {
             this.children[i].destroy();
         }
 
         removeFromArray(World.Objects, this);
+        this.object.remove();
     }
 }
 
@@ -184,6 +188,9 @@ class DynamicObject extends BaseObject {
      * @param {DynamicObject} object объект
      */
     collide(object) {
+        if (lengthBetween(this.x, this.y, object.x, object.y) > MIN_DISTANCE_TO_OBJECT)
+            return null;
+
         let dots = [];
         let len1 = this.collider.length;
         let len2 = object.collider.length;
@@ -211,6 +218,10 @@ class DynamicObject extends BaseObject {
         dots.sort((a, b) => a[0].length() - b[0].length());
 
         if (dots.length == 0)
+            return null;
+
+        let collide = this.onCollide(dots[0][0], object) && object.onCollide(dots[0][0], this);
+        if (!collide)
             return null;
 
         Debug.displayDot("collideDot", dots[0][0], "blue");
@@ -249,7 +260,7 @@ class DynamicObject extends BaseObject {
      * @param {Vector} velocity ускорение объекта
      * @param {Number} angularVelocity вращательное ускорение
      */
-    #addVelocity(velocity, angularVelocity) {
+    _addVelocity(velocity, angularVelocity) {
         let cos = this.velocity.cos(velocity);
 
         this.velocity.add(velocity.multiply(cos < 0 ? (1 - cos) : 1));
@@ -270,7 +281,7 @@ class DynamicObject extends BaseObject {
         this.reduceVelocity = !(velocity.x || velocity.y);
         this.reduceAngularVelocity = angularVelocity == 0;
 
-        this.#addVelocity(velocity, angularVelocity, false);
+        this._addVelocity(velocity, angularVelocity, false);
     }
 
     /**
@@ -292,10 +303,25 @@ class DynamicObject extends BaseObject {
         
         super.update();
 
-        this.#addVelocity(
-            this.reduceVelocity ? new Vector(-this.velocity.x, -this.velocity.y).normalize() : Vector.ZERO,
+        this._addVelocity(
+            this.reduceVelocity ? this.velocity.new().multiply(-1).normalize() : Vector.ZERO,
             this.reduceAngularVelocity ? -this.angularVelocity / 2 : 0
         );
+    }
+
+    /**
+     * 
+     * @param {Vector} dot
+     * @param {DynamicObject} object 
+     */
+    onCollide(dot, object) {
+        return true; // можно было бы собитиями сделать, но с пулями это будет не очень эффективно
+    }
+
+    destroy() {
+        super.destroy();
+
+        removeFromArray(World.DynamicObjects, this);
     }
 }
 
@@ -304,11 +330,16 @@ class DamageableObject extends DynamicObject {
     health = 100;
 
     damage(value) {
-        health -= value;
+        this.health -= value;
 
-        if (health <= 0) {
-            document.getElementById("space").removeChild(this.object);
-            removeFromArray(World.objects, this);
+        if (this.health <= 0) {
+            this.destroy();
         }
+    }
+
+    update(deltaTime) {
+        super.update(deltaTime);
+
+        Debug.displayText(`health${this.id}`, this.globalPosition.new().add2(0, 64), this.health);
     }
 }

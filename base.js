@@ -169,6 +169,16 @@ class Vector {
     }
 
     /**
+     * 
+     * @param {Vector} vector 
+     */
+    set2(vector) {
+        this.x = vector.x;
+        this.y = vector.y;
+        return this;
+    }
+
+    /**
      * Сложение с вектором
      * @param {Vector} vector 
      */
@@ -266,22 +276,28 @@ class Vector {
 }
 
 class Debug {
-    static enabled = true;
+    static enabled = false;
 
+    /**@type {SVGSVGElement} */
     static #displayedLinesObject;
+    /**@type {Object<any, SVGPolylineElement>} */
     static #displayedLines = {};
 
+    /**@type {Object<any, BaseObject>} */
     static #displayedDots = {};
+
+    /**@type {Object<any, BaseObject>} */
+    static #displayedTexts = {};
 
     /**
      * Отображает линию по двум точкам в глобальных координатах
      * @param {any} lineId 
-     * @param {Vector} point1 
-     * @param {Vector} point2 
+     * @param {Vector} dot1 
+     * @param {Vector} dot2 
      * @param {String} color 
      * @returns 
      */
-    static displayLine(lineId, point1, point2, color) {
+    static displayLine(lineId, dot1, dot2, color) {
         if (Debug.#displayedLinesObject) 
             Debug.#displayedLinesObject.style.display = Debug.enabled ? "inline" : "none";
 
@@ -304,17 +320,17 @@ class Debug {
             Debug.#displayedLines[lineId] = polyLine;
         }
 
-        Debug.#displayedLines[lineId].setAttribute("points", `${point1.x},${point1.y} ${point2.x},${point2.y}`);
+        Debug.#displayedLines[lineId].setAttribute("points", `${dot1.x},${dot1.y} ${dot2.x},${dot2.y}`);
     }
 
     /**
      * Отображает токчку в глобальных координатах
      * @param {any} dotId 
-     * @param {Vector} point
+     * @param {Vector} position
      * @param {String} color 
      * @returns 
      */
-    static displayDot(dotId, point, color) {
+    static displayDot(dotId, position, color) {
         if (!Debug.enabled)
             return;
 
@@ -326,8 +342,32 @@ class Debug {
             Debug.#displayedDots[dotId] = dot;
         }
 
-        Debug.#displayedDots[dotId].x = point.x;
-        Debug.#displayedDots[dotId].y = point.y;
+        Debug.#displayedDots[dotId].x = position.x;
+        Debug.#displayedDots[dotId].y = position.y;
         Debug.#displayedDots[dotId].update();
+    }
+
+    /**
+     * 
+     * @param {any} textId 
+     * @param {Vector} position 
+     * @param {String} value
+     * @returns 
+     */
+    static displayText(textId, position, value) {
+        if (!Debug.enabled)
+            return;
+
+        if (!Debug.#displayedTexts[textId]) {
+            let text = new BaseObject(textId, null, null);
+            text.object.setAttribute("class", "debugText");
+            text.object.setAttribute("id", textId);
+            Debug.#displayedTexts[textId] = text;
+        }
+
+        Debug.#displayedTexts[textId].object.innerText = value;
+        Debug.#displayedTexts[textId].x = position.x;
+        Debug.#displayedTexts[textId].y = position.y;
+        Debug.#displayedTexts[textId].update();
     }
 }

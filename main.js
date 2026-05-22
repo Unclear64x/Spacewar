@@ -57,7 +57,7 @@ function playerInput(delta) {
     }
 
     World.Player.input(velocity.normalize().multiply(3), angularVelocity);
-    World.Player.lookGunAt(Input.CursorGlobal);
+    World.Player.lookGunAt(Input.Cursor.new().add(World.Player.globalPosition));
     if (Input.keyPressed(Button.LMB))
         World.Player.fire();
 }

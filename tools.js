@@ -98,3 +98,16 @@ function hasDot(dot1, dot2, polygon) {
 
     return d <= 0;
 }
+
+/**
+ * 
+ * @param {Number} x1 
+ * @param {Number} y1 
+ * @param {Number} x2 
+ * @param {Number} y2 
+ */
+function lengthBetween(x1, y1, x2, y2) {
+    let x = x2 - x1;
+    let y = y2 - y1;
+    return (x ** 2 + y ** 2) ** 0.5;
+}

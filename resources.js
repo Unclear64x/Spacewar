@@ -1,20 +1,4 @@
-let stickmanAnimation = {
-    "root": "player",
-    "type": "dynamic",
-    "states": {
-        "idle": [4, 80],
-        "move": [4, 80]
-    }
-};
-
-let doorAnimation = {
-    "root": "door",
-    "type": "static",
-    "states": {
-        "closed": "0",
-        "opened": "1"
-    }
-};
+let MIN_DISTANCE_TO_OBJECT = ((64 ** 2) * 2) ** 0.5;
 
 let gunAnimation = {
     "root": "gun",

@@ -4,8 +4,6 @@ class Input {
     
     /**@type {Vector} */
     static Cursor = new Vector(0, 0);
-    /**@type {Vector} */
-    static CursorGlobal = new Vector(0, 0);
 
     /**
      * 
@@ -30,7 +28,7 @@ class Input {
      * @param {boolean} down 
      */
     static mouseButton(button, down = true) {
-        Input.#keys[button.button] = down;
+        Input.#keys[`Mouse${button.button}`] = down;
     }
 
     /**
@@ -39,7 +37,6 @@ class Input {
      */
     static mouseMove(move) {
         Input.Cursor.set(move.clientX - (window.innerWidth / 2), move.clientY - (window.innerHeight / 2));
-        Input.CursorGlobal.set(Input.Cursor.x, Input.Cursor.y).add(World.Player.globalPosition);
     }
 
     static init() {
@@ -47,7 +44,7 @@ class Input {
         window.addEventListener("keyup", (button) => Input.button(button, false));
         window.addEventListener("mousemove", (move) => Input.mouseMove(move));
         window.addEventListener("mousedown", (button) => Input.mouseButton(button, true));
-        window.addEventListener("mouseup", (button) => Input.mouseButton(button, true));
+        window.addEventListener("mouseup", (button) => Input.mouseButton(button, false));
     }
 
     static keys() {
