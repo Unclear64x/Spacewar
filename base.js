@@ -179,6 +179,16 @@ class Vector {
     }
 
     /**
+     * Вычитание из вектора
+     * @param {Vector} vector 
+     */
+    remove(vector) {
+        this.x -= vector.x;
+        this.y -= vector.y;
+        return this;
+    }
+
+    /**
      * Добавление чисел к координатам
      * @param {Number} x 
      * @param {Number} y 
@@ -190,12 +200,13 @@ class Vector {
     }
 
     /**
-     * Вычитание из вектора
-     * @param {Vector} vector 
+     * Вычитание чисел из координат
+     * @param {Number} x 
+     * @param {Number} y 
      */
-    remove(vector) {
-        this.x -= vector.x;
-        this.y -= vector.y;
+    remove2(x, y) {
+        this.x += x;
+        this.y += y;
         return this;
     }
 
@@ -271,6 +282,9 @@ class Debug {
      * @returns 
      */
     static displayLine(lineId, point1, point2, color) {
+        if (Debug.#displayedLinesObject) 
+            Debug.#displayedLinesObject.style.display = Debug.enabled ? "inline" : "none";
+
         if (!Debug.enabled)
             return;
 
@@ -305,7 +319,7 @@ class Debug {
             return;
 
         if (!Debug.#displayedDots[dotId]) {
-            let dot = new BaseObject(objects, [], dotId, null, null);
+            let dot = new BaseObject(dotId, null, null);
             dot.object.setAttribute("class", "debugDot");
             dot.object.style.backgroundColor = color;
             dot.object.setAttribute("id", dotId);

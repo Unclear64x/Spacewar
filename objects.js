@@ -7,14 +7,14 @@ class BaseObject {
     y;
     /**@type {Number} */
     angle = 0;
-    /**@type {Array<BaseObject>} */
-    objects;
-    /**@type {Array<Vector>} */
-    collider = null;
     /**@type {Animator} */
     animator;
     /**@type {Array<ChildObject>} */
     children = [];
+    /**@type {Vector} */
+    forward = new Vector(0, 1);
+    /**@type {Vector} */
+    globalPosition = new Vector(0, 0);
 
     static #totalId = 0;
 
@@ -26,54 +26,47 @@ class BaseObject {
 
     /**
      * 
-     * @param {Array<BaseObject>} objects массив всех объектов
-     * @param {Array<Vector>} collider массив точек коллайдера
-     * @param {String} id id
+     * @param {String} uniqueId id
      * @param {Object} animatorParams параметры для аниматора 
      * @param {String} startState начальное состояние аниматора
      * @param {Number} x позиция X
      * @param {Number} y позиция Y
      */
-    constructor(objects, collider, id, animatorParams, startState, x = 0, y = 0) {
+    constructor(uniqueId, animatorParams, startState, x = 0, y = 0) {
         this.id = BaseObject.#totalId++;
 
-        this.defaultConstructor(id, animatorParams, startState, x, y);
+        console.log(uniqueId, animatorParams, startState, x, y);
 
-        this.objects = objects;
-        
-        for (let i = 0; i < collider.length; i++) {
-            collider[i].multiply(64);
-        }
-        
-        this.collider = collider;
-
-        document.getElementById("space").append(this.object);
+        this.defaultConstructor(uniqueId, animatorParams, startState, x, y);
     }
 
     /**
      * 
-     * @param {String} id id
+     * @param {String} uniqueId id
      * @param {Object} animatorParams параметры для аниматора 
      * @param {String} startState начальное состояние аниматора
      * @param {Number} x позиция X
      * @param {Number} y позиция Y
      */
-    defaultConstructor(id, animatorParams, startState, x, y) {
+    defaultConstructor(uniqueId, animatorParams, startState, x, y) {
         this.object = document.createElement("div");
-        this.object.id = id;
         this.object.className = "object";
+        if (uniqueId)
+            this.object.id = uniqueId;
 
         this.x = x;
         this.y = y;
 
-        if (!animatorParams || !startState)
-            return;
+        if (animatorParams && startState) {
+            this.img = document.createElement("img");
+            this.img.className = "image";
+            this.object.append(this.img);
 
-        this.img = document.createElement("img");
-        this.img.className = "image";
-        this.object.append(this.img);
+            this.animator = new Animator(animatorParams, this.img, startState);
+        }
 
-        this.animator = new Animator(animatorParams, this.img, startState);
+        World.Space.append(this.object);
+        World.Objects.push(this);
     }
 
     addChild(id, animatorParams, startState, x = 0, y = 0) {
@@ -83,27 +76,29 @@ class BaseObject {
         return child;
     }
 
-    /** @returns {Vector} */
-    globalPosition() {
-        return new Vector(this.x, this.y);
-    }
-
-    /**@returns {Number} */
-    globalRotation() {
-        return this.angle;
-    }
-
     update() {
-        //this.object.style.left = this.x + "px";
-        //this.object.style.top = this.y + "px";
+        this.updateGlobalPosition();
+        this.forward.set(Math.cos(this.angle), Math.sin(this.angle));
 
         this.object.style.transform = `translate(${this.x}px, ${this.y}px) rotate(${this.angle}rad)`
 
-        Debug.displayLine(`${this.id} forward`, this.globalPosition(), this.globalPosition().add2(100 * Math.cos(this.angle), 100 * Math.sin(this.angle)), "purple");
+        Debug.displayLine(`${this.id} forward`, this.globalPosition, this.forward.new().multiply(100).add(this.globalPosition), "purple");
 
         for (let i = 0; i < this.children.length; i++) {
             this.children[i].update();
         }
+    }
+
+    updateGlobalPosition() {
+        this.globalPosition.set(this.x, this.y);
+    }
+
+    destroy() {
+        for (let i = 0; i < this.children; i++) {
+            this.children[i].destroy();
+        }
+
+        removeFromArray(World.Objects, this);
     }
 }
 
@@ -113,36 +108,33 @@ class ChildObject extends BaseObject {
     /**
      * 
      * @param {BaseObject} parent 
-     * @param {String} id 
+     * @param {String} uniqueId 
      * @param {Object} animatorParams 
      * @param {String} startState 
      * @param {Number} x 
      * @param {Number} y 
      */
-    constructor(parent, id, animatorParams, startState, x = 0, y = 0) {
-        super([], [], id, animatorParams, startState, x, y);
+    constructor(parent, uniqueId, animatorParams, startState, x = 0, y = 0) {
+        super(uniqueId, animatorParams, startState, x, y);
 
         this.parent = parent;
     }
 
-    globalPosition() {
+    updateGlobalPosition() {
         let sin = Math.sin(this.parent.angle);
         let cos = Math.cos(this.parent.angle);
 
-        let x = this.parent.globalPosition().x + this.x * cos - this.y * sin;
-        let y = this.parent.globalPosition().y + this.x * sin + this.y * cos;
-
-        return new Vector(x, y);
-    }
-
-    globalRotation() {
-        return this.parent.globalRotation() + this.angle;
+        let x = this.parent.globalPosition.x + this.x * cos - this.y * sin;
+        let y = this.parent.globalPosition.y + this.x * sin + this.y * cos;
+        this.globalPosition.set(x, y);
     }
 }
 
 class DynamicObject extends BaseObject {
     velocity = new Vector(0, 0);
     angularVelocity = 0;
+    /**@type {Array<Vector>} */
+    collider;
     mass = 1;
     /**@type {Vector} */
     center;
@@ -153,35 +145,38 @@ class DynamicObject extends BaseObject {
 
     reduceVelocity = true;
     reduceAngularVelocity = true;
-    static reduceFactor = 0.05;
+    static reduceFactor = 0.2;
     
-    static maxVelocity = 300;
+    static maxVelocity = 250;
     static maxAngularVelocity = 10;
     
     /**
      * 
      * @param {Array<BaseObject>} objects массив всех объектов
      * @param {Array<Vector>} collider массив точек коллайдера
-     * @param {String} id id
+     * @param {String} uniqueId id
      * @param {Object} animatorParams параметры для аниматора 
      * @param {String} startState начальное состояние аниматора
      * @param {Number} x позиция X
      * @param {Number} y позиция Y
      * @param {Number} mass масса объекта
      */
-    constructor(objects, collider, id, animatorParams, startState, x = 0, y = 0, mass = 1) {
-        super(objects, collider, id, animatorParams, startState, x, y);
+    constructor(collider, uniqueId, animatorParams, startState, x = 0, y = 0, mass = 1) {
+        super(uniqueId, animatorParams, startState, x, y);
 
-        //this.displayCollider();
+        // интересно, кто у кого синтаксис повзаимствовал с ?
+        for (let i = 0; i < collider?.length ?? 0; i++) {
+            collider[i].multiply(64);
+        }
 
-        objects.push(this);
+        this.collider = collider;
 
         let colliderInfo = getColliderInfo(collider, mass);
         this.center = colliderInfo[0];
         this.momentInercia = colliderInfo[1];
         this.mass = mass;
 
-        console.log(this.x, this.y);
+        World.DynamicObjects.push(this);
     }
 
     /**
@@ -242,102 +237,11 @@ class DynamicObject extends BaseObject {
 
         let j = 2 * this.velocity.new().remove(object.velocity).scalar(n1.normalize()) / ((1 / this.mass) + (1 / object.mass)); 
 
-        // let vel = this.velocity.new().remove(dot.new().remove(object.globalPosition()));
-        // this.addVelocity(object.velocity.new().remove(dot.new().remove(this.globalPosition())), angular);
-        // object.addVelocity(vel, objectAngular);
-
         this.addVelocity(n1.new().multiply(-j / this.mass), angular);
         object.addVelocity(n1.new().multiply(j / object.mass), objectAngular);
         console.log(n1, j);
 
-        // ненавижу физику
-
-        // let globalCenter = this.center.new().rotate(this.angle).add2(this.x, this.y);
-        // let globalObjectCenter = object.center.new().rotate(object.angle).add2(object.x, object.y);
-
-        // let radiusVectorCenterToDot = dot.new().remove(globalCenter);
-        // let objectRadiusVectorCenterToDot = dot.new().remove(globalObjectCenter);
-
-        // let relativeVelocity = this.velocity.new().remove(object);
-        // let moveAngle = relativeVelocity.scalar(n);
-        
-        // let partOfMass = 1 / this.mass;
-        // let objectPartOfMass = 1 / object.mass;
-
-        // let partOfInercia = 1 / this.momentInercia;
-        // let objectPartOfInercia = 1 / object.momentInercia;
-
-        // let moveVector = radiusVectorCenterToDot.cross(n);
-        // let objectMoveVector = objectRadiusVectorCenterToDot.cross(n);
-
-        // let d = partOfMass + objectPartOfMass + (moveVector ** 2) * partOfInercia + (objectMoveVector ** 2) * objectPartOfInercia;
-
-        // if (d == 0)
-        //     return;
-
-        // let uprugost = 0.5;
-        // let impulse = n.multiply(-(1 + uprugost) * moveAngle / d);
-
-        // let deltaMomentOfInercia = radiusVectorCenterToDot.cross(impulse);
-        // let objectDeltaMomentOfInercia = objectRadiusVectorCenterToDot.cross(impulse);
-
-        // Debug.displayLine(`${this.id} imp`, this.globalPosition(), impulse.new().add(this.globalPosition()), "yellow");
-        // Debug.displayLine(`${object.id} imp`, object.globalPosition(), impulse.new().multiply(-1).add(object.globalPosition()), "yellow");
-
-        // this.addVelocity(impulse, deltaMomentOfInercia);
-        // object.addVelocity(impulse.new().multiply(-1), objectDeltaMomentOfInercia);
-
         return dots[0];
-    }
-
-    /**
-     * 
-     * @param {DynamicObject} object 
-     * @param {Vector} dot 
-     * @param {Vector} n1 
-     * @param {Vector} n2 
-     */
-    calculateCollision(object, dot, n1, n2) {
-        let n = n1.new().add(n2).normalize();
-        if (n.length() == 0)
-            return;
-
-        let cA = this.center.new().rotate(this.angle).add2(this.x, this.y);
-        let cB = object.center.new().rotate(object.angle).add2(object.x, object.y);
-
-        let rA = dot.new().remove(cA);
-        let rB = dot.new().remove(cB);
-
-        let vA = this.velocity.new().add(rA.new().perpend().multiply(this.angularVelocity));
-        let vB = object.velocity.new().add(rB.new().perpend().multiply(object.angularVelocity));
-
-        let vRel = vA.remove(vB);
-        let vrn = vRel.scalar(n);
-
-        let invMassA = 1 / this.mass;
-        let invMassB = 1 / object.mass;
-
-        let invIA = 1 / this.momentInercia;
-        let invIB = 1 / object.momentInercia;
-
-        let rAxn = rA.cross(n);
-        let rBxn = rB.cross(n);
-
-        let denom = invMassA + invMassB + (rAxn ** 2) * invIA + (rBxn ** 2) * invIB;
-        if (denom == 0)
-            return;
-
-        let e = 1;
-
-        let j = -(1 + e) * vrn / denom;
-        let impulse = n.new().multiply(j);
-
-        console.log(invMassA, invMassB, j);
-
-        this.velocity.multiply(0);
-        object.velocity.multiply(0);
-        this.addVelocity(impulse.new().multiply(invMassA), rA.cross(impulse) + invIA);
-        object.addVelocity(impulse.new().multiply(-invMassB), rB.cross(impulse) + invIB);
     }
 
     /**
@@ -346,12 +250,7 @@ class DynamicObject extends BaseObject {
      * @param {Number} angularVelocity вращательное ускорение
      */
     #addVelocity(velocity, angularVelocity) {
-        //console.log(velocity);
-        //console.log(this.reduceAngularVelocity, angularVelocity);
-
         let cos = this.velocity.cos(velocity);
-
-        //console.log(this.reduceVelocity, cos < 0 ? (1 - cos) : 1)
 
         this.velocity.add(velocity.multiply(cos < 0 ? (1 - cos) : 1));
 
@@ -389,7 +288,7 @@ class DynamicObject extends BaseObject {
         else if (this.angle < 0)
             this.angle += Math.PI * 2;
 
-        Debug.displayLine(`${this.id} velocity`, this.globalPosition(), this.globalPosition().add(this.velocity), "white")
+        Debug.displayLine(`${this.id} velocity`, this.globalPosition, this.globalPosition.new().add(this.velocity), "white")
         
         super.update();
 
@@ -407,7 +306,9 @@ class DamageableObject extends DynamicObject {
     damage(value) {
         health -= value;
 
-        if (health <= 0)
+        if (health <= 0) {
             document.getElementById("space").removeChild(this.object);
+            removeFromArray(World.objects, this);
+        }
     }
 }

@@ -1,100 +1,87 @@
-let lastTime = 0;
-
-/**@type {Player} */
-let player;
-/**@type {HTMLElement} */
-let space;
-
-/**@type {Object<String, Boolean>} */
-let keys = {};
-
-/**@type {Array<DynamicObject>} */
-let objects = [];
-
+/**============== ввод игрока ========= */
 let move = false;
 let velocity = new Vector(0, 0);
 let forwardVelocity = new Vector(0, 0);
 let rightVelocity = new Vector(0, 0);
 let angularVelocity = 0;
+
 let cursor = new Vector(0, 0);
 let cursorGlobal = new Vector(0, 0);
-
-let meteorite;
-let physycsDot;
+/**============== ввод игрока ========= */
 
 addEventListeners();
 
+let lastTime = 0;
+let delta = 0;
 function update(currentTime) {
-    let delta = (currentTime - lastTime) / 1000;
+    delta = (currentTime - lastTime) / 1000;
     lastTime = currentTime;
 
     playerInput(delta);
-    centerAtPlayer();
+    centerCameraAtPlayer();
 
     physycs();
 
-    for (let i = 0; i < objects.length; i++) {
-        objects[i].update(delta);
+    for (let i = 0; i < World.Objects.length; i++) {
+        World.Objects[i].update(delta);
     }
 
     requestAnimationFrame(update);
 }
 
-function keyPressed(keyCode) {
-    return keys[keyCode] == true;
-}
-
 function playerInput(delta) {
-    forwardVelocity.set(Math.cos(player.angle), Math.sin(player.angle));
+    forwardVelocity.set(World.Player.forward.x, World.Player.forward.y);
     rightVelocity.set(forwardVelocity.y, -forwardVelocity.x);
 
-    let tan = Math.atan2(cursor.y, cursor.x);
-    let angle = tan - player.angle;
+    let tan = Math.atan2(Input.Cursor.y, Input.Cursor.x);
+    let angle = tan - World.Player.angle;
     
     if (angle < -Math.PI) angle += Math.PI * 2;
     if (angle > Math.PI) angle -= Math.PI * 2;
     
-    angularVelocity = (angle - player.angularVelocity / 4);
+    angularVelocity = (angle - World.Player.angularVelocity / 4);
 
     velocity.set(0, 0);
-    if (keyPressed("KeyW")) {
+    if (Input.keyPressed(Button.W)) {
         velocity.add(forwardVelocity);
     }
-    else if (keyPressed("KeyS")) {
+    else if (Input.keyPressed(Button.S)) {
         velocity.remove(forwardVelocity);
     }
 
-    if (keyPressed("KeyA")) {
+    if (Input.keyPressed(Button.A)) {
         velocity.add(rightVelocity);
     }
-    else if (keyPressed("KeyD")) {
+    else if (Input.keyPressed(Button.D)) {
         velocity.remove(rightVelocity);
     }
 
-    player.input(velocity.normalize(), angularVelocity);
-    player.lookAt(cursorGlobal);
+    World.Player.input(velocity.normalize().multiply(3), angularVelocity);
+    World.Player.lookGunAt(Input.CursorGlobal);
+    if (Input.keyPressed(Button.LMB))
+        World.Player.fire();
 }
 
-function centerAtPlayer() {
-    let cameraX = window.innerWidth / 2 - player.x;
-    let cameraY = window.innerHeight / 2 - player.y;
-    space.style.transform = `translate(${cameraX}px, ${cameraY}px)`;
+function centerCameraAtPlayer() {
+    let cameraX = window.innerWidth / 2 - World.Player.x;
+    let cameraY = window.innerHeight / 2 - World.Player.y;
+    World.Space.style.transform = `translate(${cameraX}px, ${cameraY}px)`;
 }
 
 function physycs() {
     let collided = {};
 
-    for (let i = 0; i < objects.length; i++) {
+    for (let i = 0; i < World.DynamicObjects.length; i++) {
         if (!collided[i])
             collided[i] = [];
-        for (let b = i + 1; b < objects.length; b++) {
+        for (let b = i + 1; b < World.DynamicObjects.length; b++) {
             if (!collided[b])
                 collided[b] = [];
 
             if (collided[i].includes(b))
                 continue;
 
-            let dot = objects[i].collide(objects[b]);
+            let dot = World.DynamicObjects[i].collide(World.DynamicObjects[b]);
 
             if (dot) {
                 collided[b].push(i);
@@ -106,25 +93,13 @@ function physycs() {
 
 function addEventListeners() {
     window.addEventListener("DOMContentLoaded", (e) => {
-        space = document.getElementById("space");
+        Input.init();
 
-        player = new Player(objects, 200000 / 2, 200000 / 2);
-        meteorite = new Meteorite(objects, player.x + 200, player.y);
-        
+        World.Space = document.getElementById("space");
 
-
-        //colliders.push(new Door(colliders, interactable, 200, 0));
+        World.Player = new Player(200000 / 2, 200000 / 2);
+        new Meteorite(World.Player.x + 200, World.Player.y);
 
         update(0);
     });
-    window.addEventListener("keydown", (e) => {
-        keys[e.code] = true;
-    });
-    window.addEventListener("keyup", (e) => {
-        keys[e.code] = false;
-    });
-    window.addEventListener("mousemove", (e) => {
-        cursor.set(e.clientX - (window.innerWidth / 2), e.clientY - (window.innerHeight / 2));
-        cursorGlobal.add(player.globalPosition());
-    })
 }

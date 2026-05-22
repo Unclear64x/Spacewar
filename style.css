@@ -28,6 +28,13 @@ body {
     transform: translate(-50%, -50%);
 }
 
+.bullet {
+    position: absolute;
+    height: 4px;
+    transform-origin: right center;
+    background: linear-gradient(90deg, rgba(128,0,0,1) 0%, rgba(255,128,0,1) 100%);
+}
+
 .debugSpace {
     position: absolute;
 
