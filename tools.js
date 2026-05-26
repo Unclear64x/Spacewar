@@ -56,7 +56,6 @@ function getColliderInfo(collider, mass) {
  * @param {Number} k 
  */
 function lerp(start, end, k) {
-    console.log(`${start} + (${end - start}) * ${k}`);
     return start + (end - start) * k;
 }
 

@@ -18,13 +18,20 @@ function update(currentTime) {
     lastTime = currentTime;
 
     playerInput(delta);
-    centerCameraAtPlayer();
+    //centerCameraAtPlayer();
 
     physycs();
 
-    for (let i = 0; i < World.Objects.length; i++) {
+    for (let i in World.Objects) {
         World.Objects[i].update(delta);
     }
+
+    Camera.update();
+
+    Debug.displayInfo("UPS", 1000 / delta);
+    Debug.displayInfo("Objects", Object.keys(World.Objects).length);
+    Debug.displayInfo("DynamicObjects", Object.keys(World.DynamicObjects).length);
+    Camera.debug();
 
     requestAnimationFrame(update);
 }
@@ -57,7 +64,7 @@ function playerInput(delta) {
     }
 
     World.Player.input(velocity.normalize().multiply(3), angularVelocity);
-    World.Player.lookGunAt(Input.Cursor.new().add(World.Player.globalPosition));
+    World.Player.lookGunAt(Input.CursorGlobal);
     if (Input.keyPressed(Button.LMB))
         World.Player.fire();
 }
@@ -71,17 +78,18 @@ function centerCameraAtPlayer() {
 function physycs() {
     let collided = {};
 
-    for (let i = 0; i < World.DynamicObjects.length; i++) {
+    let ids = Object.keys(World.DynamicObjects);
+    for (let i = 0; i < ids.length; i++) {
         if (!collided[i])
             collided[i] = [];
-        for (let b = i + 1; b < World.DynamicObjects.length; b++) {
+        for (let b = i + 1; b < ids.length; b++) {
             if (!collided[b])
                 collided[b] = [];
 
-            if (collided[i].includes(b))
+            if (collided[i].includes(b) || !World.DynamicObjects[ids[i]] || !World.DynamicObjects[ids[b]])
                 continue;
 
-            let dot = World.DynamicObjects[i].collide(World.DynamicObjects[b]);
+            let dot = World.DynamicObjects[ids[i]].collide(World.DynamicObjects[ids[b]]);
 
             if (dot) {
                 collided[b].push(i);
@@ -93,13 +101,20 @@ function physycs() {
 
 function addEventListeners() {
     window.addEventListener("DOMContentLoaded", (e) => {
+        loadStorage();
+        
         Input.init();
 
         World.Space = document.getElementById("space");
+        World.Space.addEventListener('dragstart', (e) => e.preventDefault());
 
         World.Player = new Player(200000 / 2, 200000 / 2);
         new Meteorite(World.Player.x + 200, World.Player.y);
 
         update(0);
     });
+}
+
+function loadStorage() {
+    Debug.load();
 }

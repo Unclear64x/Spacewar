@@ -4,6 +4,8 @@ class Input {
     
     /**@type {Vector} */
     static Cursor = new Vector(0, 0);
+    /**@type {Vector} */
+    static CursorGlobal = new Vector(0, 0);
 
     /**
      * 

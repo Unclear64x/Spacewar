@@ -23,6 +23,8 @@ class Animator {
     /**@type {Number} кол-во фреймов*/
     frames = 0;
 
+    #lastState;
+
     /**
      * 
      * @param {Object} params параметры анимации
@@ -57,10 +59,33 @@ class Animator {
     /**
      * Задаёт состояние анимации
      * @param {String} state состояние
+     * @param {boolean} oneShot проиграть анимацию 1 раз
      */
-    setState(state) {
+    setState(state, oneShot = false) {
         if (state === this.state)
             return;
+
+        if (oneShot && this.#lastState)
+            this.state = this.#lastState;
+
+        this.#lastState = this.state;
+
+        // надо сделать так, чтобы при стрельбе, даже очень быстрой
+        // таймер корректно возвращал this.state в исходное положение при oneShot
+        // или просто при стрельбе пушке устанавливать duration между кадрами такой,
+        // чтобы оставался запас по времени на сброс состояние
+        
+
+        // если снова забуду что делать: 
+        
+        // интегрировать анимации с параметром oneShot для выстрела пукалки
+        
+        // разобраться, почему пули больше не толкают объект при столкновении с метеоритом
+        
+        // сделать сдвиг камеры от игрока в сторону курсора как в секретном проекте steoc (вторая реализация псевдо 3д)
+        // или вообще сделать отдельную систему для сдвига камеры, например при близости с противников (в границах экрана)
+        // камера будет между игроком и ближ. противником
+        // скорее всего через отдельный класс Camera с точкой обзора
 
         this.state = state;
         this.frame = 0;
@@ -71,16 +96,21 @@ class Animator {
 
         this.nextFrame();
         if (this.durations[state] != 0) {
-            this.timer = setInterval(() => this.nextFrame(), this.durations[state]);
+            this.timer = setInterval(() => this.nextFrame(oneShot), this.durations[state]);
         }
         else {
             this.timer = 0;
         }
     }
 
-    nextFrame() {
+    nextFrame(oneShot) {
         this.obj.src = this.states[this.state][this.frame++].src;
         this.frame %= this.frames;
+        if (oneShot && this.frame == 0) {
+            clearInterval(this.timer);
+            this.setState(this.#lastState);
+            this.#lastState = "";
+        }
     }
 
     /**
@@ -272,102 +302,5 @@ class Vector {
      */
     new() {
         return new Vector(this.x, this.y);
-    }
-}
-
-class Debug {
-    static enabled = false;
-
-    /**@type {SVGSVGElement} */
-    static #displayedLinesObject;
-    /**@type {Object<any, SVGPolylineElement>} */
-    static #displayedLines = {};
-
-    /**@type {Object<any, BaseObject>} */
-    static #displayedDots = {};
-
-    /**@type {Object<any, BaseObject>} */
-    static #displayedTexts = {};
-
-    /**
-     * Отображает линию по двум точкам в глобальных координатах
-     * @param {any} lineId 
-     * @param {Vector} dot1 
-     * @param {Vector} dot2 
-     * @param {String} color 
-     * @returns 
-     */
-    static displayLine(lineId, dot1, dot2, color) {
-        if (Debug.#displayedLinesObject) 
-            Debug.#displayedLinesObject.style.display = Debug.enabled ? "inline" : "none";
-
-        if (!Debug.enabled)
-            return;
-
-        if (!Debug.#displayedLinesObject) {
-            Debug.#displayedLinesObject = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-            Debug.#displayedLinesObject.setAttribute("class", "debugSpace");
-            document.getElementById("space").append(Debug.#displayedLinesObject);
-        }
-
-        if (!Debug.#displayedLines[lineId]) {
-            let polyLine = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-            polyLine.setAttribute("fill", "none");
-            polyLine.setAttribute("stroke",  color);
-            polyLine.setAttribute("stroke-width", "2");
-            polyLine.setAttribute("id", lineId);
-            Debug.#displayedLinesObject.append(polyLine);
-            Debug.#displayedLines[lineId] = polyLine;
-        }
-
-        Debug.#displayedLines[lineId].setAttribute("points", `${dot1.x},${dot1.y} ${dot2.x},${dot2.y}`);
-    }
-
-    /**
-     * Отображает токчку в глобальных координатах
-     * @param {any} dotId 
-     * @param {Vector} position
-     * @param {String} color 
-     * @returns 
-     */
-    static displayDot(dotId, position, color) {
-        if (!Debug.enabled)
-            return;
-
-        if (!Debug.#displayedDots[dotId]) {
-            let dot = new BaseObject(dotId, null, null);
-            dot.object.setAttribute("class", "debugDot");
-            dot.object.style.backgroundColor = color;
-            dot.object.setAttribute("id", dotId);
-            Debug.#displayedDots[dotId] = dot;
-        }
-
-        Debug.#displayedDots[dotId].x = position.x;
-        Debug.#displayedDots[dotId].y = position.y;
-        Debug.#displayedDots[dotId].update();
-    }
-
-    /**
-     * 
-     * @param {any} textId 
-     * @param {Vector} position 
-     * @param {String} value
-     * @returns 
-     */
-    static displayText(textId, position, value) {
-        if (!Debug.enabled)
-            return;
-
-        if (!Debug.#displayedTexts[textId]) {
-            let text = new BaseObject(textId, null, null);
-            text.object.setAttribute("class", "debugText");
-            text.object.setAttribute("id", textId);
-            Debug.#displayedTexts[textId] = text;
-        }
-
-        Debug.#displayedTexts[textId].object.innerText = value;
-        Debug.#displayedTexts[textId].x = position.x;
-        Debug.#displayedTexts[textId].y = position.y;
-        Debug.#displayedTexts[textId].update();
     }
 }

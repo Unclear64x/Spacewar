@@ -11,6 +11,11 @@ class Ship extends DamageableObject {
     /**@type {Number} */
     gun2Timer;
 
+    /**@type {ParticleSystem} */
+    particleSystem1;
+    /**@type {ParticleSystem} */
+    particleSystem2;
+
     constructor(id, x, y) {
         let collider = [
             new Vector(0.5, 0.5),
@@ -21,17 +26,31 @@ class Ship extends DamageableObject {
 
         super(collider, id, shipAnimation, "idle", x, y, 40);
 
-        this.gun1 = this.addChild("gun1", gunAnimation, "idle", 0, 20);
-        this.gun2 = this.addChild("gun2", gunAnimation, "idle", 0, -20);
+        this.gun1 = this.addChild("gun1", gunAnimation, "idle", 0, 32);
+        this.gun2 = this.addChild("gun2", gunAnimation, "idle", 0, -32);
+
+        this.particleSystem1 = new ParticleSystem(this.addChild(null, null, null, -32, 10), Vector.ZERO, 0);
+        this.particleSystem2 = new ParticleSystem(this.addChild(null, null, null, -32, -10), Vector.ZERO, 0);
     }
 
     input(velocity, angularVelocity) {
         this.addVelocity(velocity, angularVelocity);
 
+        this.particleSystem1.setDirection(velocity);
+        this.particleSystem2.setDirection(velocity);
+
+
         if (velocity.x == 0 && velocity.y == 0 && this.animator.state != "idle")
             this.animator.setState("idle");
-        else if (velocity.x != 0 && velocity.y != 0 && this.animator.state != "move")
+        else if (velocity.x != 0 && velocity.y != 0 && this.animator.state != "move") {
             this.animator.setState("move");
+        this.particleSystem1.shot();
+        this.particleSystem2.shot();
+        }
+    }
+
+    _addVelocity(velocity, angularVelocity) {
+        super._addVelocity(velocity, angularVelocity);
     }
 
     /**
@@ -40,10 +59,10 @@ class Ship extends DamageableObject {
      */
     lookGunAt(dot) {
         let a = dot.new().remove(this.gun1.globalPosition);
-        this.gun1.angle = Math.atan2(a.y, a.x);
+        this.gun1.angle = Math.atan2(a.y, a.x) - World.Player.angle;
 
         let b = dot.new().remove(this.gun2.globalPosition);
-        this.gun2.angle = Math.atan2(b.y, b.x);
+        this.gun2.angle = Math.atan2(b.y, b.x) - World.Player.angle;
     }
 
     fire() {
@@ -65,6 +84,7 @@ class Ship extends DamageableObject {
      */
     #fire(gun) {
         new Bullet(this, gun.globalPosition.x, gun.globalPosition.y, gun.forward, 10);
+        gun.animator.setState("fire", true)
     }
 }
 
@@ -156,7 +176,7 @@ class Bullet extends DynamicObject {
 
     destroy() {
         this.destroyed = true;
-        removeFromArray(World.DynamicObjects, this);
+        delete World.DynamicObjects[this.id];
         this.velocity.set(0, 0);
     }
 }

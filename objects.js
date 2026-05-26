@@ -59,17 +59,18 @@ class BaseObject {
         if (animatorParams && startState) {
             this.img = document.createElement("img");
             this.img.className = "image";
+            this.img.addEventListener('dragstart', (e) => e.preventDefault());
             this.object.append(this.img);
 
             this.animator = new Animator(animatorParams, this.img, startState);
         }
 
         World.Space.append(this.object);
-        World.Objects.push(this);
+        World.Objects[this.id] = this;
     }
 
-    addChild(id, animatorParams, startState, x = 0, y = 0) {
-        let child = new ChildObject(this, id, animatorParams, startState, x, y);
+    addChild(uniqueId, animatorParams, startState, x = 0, y = 0) {
+        let child = new ChildObject(this, uniqueId, animatorParams, startState, x, y);
         this.children.push(child);
         this.object.append(child.object);
         return child;
@@ -77,7 +78,7 @@ class BaseObject {
 
     update() {
         this.updateGlobalPosition();
-        this.forward.set(Math.cos(this.angle), Math.sin(this.angle));
+        this.forward.set(Math.cos(this.relativeAngle()), Math.sin(this.relativeAngle()));
 
         this.object.style.transform = `translate(${this.x}px, ${this.y}px) rotate(${this.angle}rad)`
 
@@ -92,6 +93,14 @@ class BaseObject {
         this.globalPosition.set(this.x, this.y);
     }
 
+    relativeAngle() {
+        return this.angle;
+    }
+
+    clearDebug() {
+        Debug.clearId(`${this.id} forward`);
+    }
+
     destroy() {
         if (this.destroyed)
             return;
@@ -101,7 +110,7 @@ class BaseObject {
             this.children[i].destroy();
         }
 
-        removeFromArray(World.Objects, this);
+        delete World.Objects[this.id];
         this.object.remove();
     }
 }
@@ -131,6 +140,10 @@ class ChildObject extends BaseObject {
         let x = this.parent.globalPosition.x + this.x * cos - this.y * sin;
         let y = this.parent.globalPosition.y + this.x * sin + this.y * cos;
         this.globalPosition.set(x, y);
+    }
+
+    relativeAngle() {
+        return this.parent.angle + this.angle;
     }
 }
 
@@ -180,7 +193,7 @@ class DynamicObject extends BaseObject {
         this.momentInercia = colliderInfo[1];
         this.mass = mass;
 
-        World.DynamicObjects.push(this);
+        World.DynamicObjects[this.id] = this;
     }
 
     /**
@@ -321,13 +334,19 @@ class DynamicObject extends BaseObject {
     destroy() {
         super.destroy();
 
-        removeFromArray(World.DynamicObjects, this);
+        delete World.DynamicObjects[this.id];
     }
 }
 
 class DamageableObject extends DynamicObject {
     /**@type {Number} */
     health = 100;
+
+    defaultConstructor(uniqueId, animatorParams, startState, x, y) {
+        super.defaultConstructor(uniqueId, animatorParams, startState, x, y);
+
+        World.DamagableObjects[this.id] = this;
+    }
 
     damage(value) {
         this.health -= value;
@@ -341,5 +360,11 @@ class DamageableObject extends DynamicObject {
         super.update(deltaTime);
 
         Debug.displayText(`health${this.id}`, this.globalPosition.new().add2(0, 64), this.health);
+    }
+
+    destroy() {
+        super.destroy();
+        
+        delete World.DamagableObjects[this.id];
     }
 }

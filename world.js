@@ -5,9 +5,11 @@ class World {
     /**@type {Player} */
     static Player;
 
-    /**@type {Array<BaseObject>} */
-    static Objects = [];
+    static Objects = {};
 
-    /**@type {Array<DynamicObject>} */
-    static DynamicObjects = [];
+    static DynamicObjects = {};
+
+    static DamagableObjects = {};
+
+    static ParticleSystems = {};
 }
