@@ -56,6 +56,7 @@ class Input {
 
 class Button {
     static LMB = "Mouse0";
+    static MMB = "Mouse1";
     static RMB = "Mouse2";
     static W = "KeyW";
     static A = "KeyA";

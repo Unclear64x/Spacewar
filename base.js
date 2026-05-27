@@ -298,6 +298,17 @@ class Vector {
     }
 
     /**
+     * Плавно приближает координаты к точке
+     * @param {Vector} to 
+     * @param {Number} k 
+     */
+    lerp(to, k) {
+        this.x = lerp(this.x, to.x, k);
+        this.y = lerp(this.y, to.y, k);
+        return this;
+    }
+
+    /**
      * Возвращает копию вектора
      */
     new() {

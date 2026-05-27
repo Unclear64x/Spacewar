@@ -110,3 +110,30 @@ function lengthBetween(x1, y1, x2, y2) {
     let y = y2 - y1;
     return (x ** 2 + y ** 2) ** 0.5;
 }
+
+/**
+ * 
+ * @param {SVGTextElement} element
+ * @param {String} text 
+ */
+function MultilineSVGText(element, text) {
+    text = text.toString();
+    let lines = text.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+        lines[i] = `<tspan x="${element.getAttribute("x")}" dy="1.1em">${lines[i]}</tspan>`;
+    }
+    // не убивайте за это, по другому я не умею
+    element.innerHTML = lines.join();
+}
+
+function random(from, to) {
+    return (to - from) * Math.random() + from;
+}
+
+function randomInt(from, to) {
+    return Math.floor((to - from + 1) * Math.random()) + from;
+}
+
+function DegToRad(deg) {
+    return deg * Math.PI / 180;
+}

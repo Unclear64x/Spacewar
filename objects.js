@@ -15,6 +15,8 @@ class BaseObject {
     forward = new Vector(0, 1);
     /**@type {Vector} */
     globalPosition = new Vector(0, 0);
+    /**@type {Number} */
+    globalRotation = 0;
 
     static #totalId = 0;
 
@@ -78,7 +80,8 @@ class BaseObject {
 
     update() {
         this.updateGlobalPosition();
-        this.forward.set(Math.cos(this.relativeAngle()), Math.sin(this.relativeAngle()));
+        this.updateGlobalRotation();
+        this.forward.set(Math.cos(this.globalRotation), Math.sin(this.globalRotation));
 
         this.object.style.transform = `translate(${this.x}px, ${this.y}px) rotate(${this.angle}rad)`
 
@@ -93,12 +96,12 @@ class BaseObject {
         this.globalPosition.set(this.x, this.y);
     }
 
-    relativeAngle() {
-        return this.angle;
+    updateGlobalRotation() {
+        this.globalRotation = this.angle;
     }
 
     clearDebug() {
-        Debug.clearId(`${this.id} forward`);
+        Debug.erase(`${this.id} forward`);
     }
 
     destroy() {
@@ -112,6 +115,7 @@ class BaseObject {
 
         delete World.Objects[this.id];
         this.object.remove();
+        this.clearDebug();
     }
 }
 
@@ -142,8 +146,8 @@ class ChildObject extends BaseObject {
         this.globalPosition.set(x, y);
     }
 
-    relativeAngle() {
-        return this.parent.angle + this.angle;
+    updateGlobalRotation() {
+        this.globalRotation = this.parent.angle + this.angle;
     }
 }
 
@@ -233,7 +237,7 @@ class DynamicObject extends BaseObject {
         if (dots.length == 0)
             return null;
 
-        let collide = this.onCollide(dots[0][0], object) && object.onCollide(dots[0][0], this);
+        let collide = this.onCollide(dots[0], object) && object.onCollide(dots[0], this);
         if (!collide)
             return null;
 
@@ -241,9 +245,9 @@ class DynamicObject extends BaseObject {
         Debug.displayLine("normal1", dots[0][0], dots[0][1], "orange");
         Debug.displayLine("normal2", dots[0][0], dots[0][2], "aqua");
 
-        let dot = dots[0][0];
-        let n1 = dots[0][1].remove(dot).normalize();
-        let n2 = dots[0][2].remove(dot).normalize();
+        let dot = dots[0][0].new();
+        let n1 = dots[0][1].new().remove(dot).normalize();
+        let n2 = dots[0][2].new().remove(dot).normalize();
         let n = n1.new().multiply(40).add(n2.multiply(40)).add(dot);
 
         Debug.displayLine("n", dot, n, "lime");
@@ -316,25 +320,38 @@ class DynamicObject extends BaseObject {
         
         super.update();
 
-        this._addVelocity(
-            this.reduceVelocity ? this.velocity.new().multiply(-1).normalize() : Vector.ZERO,
-            this.reduceAngularVelocity ? -this.angularVelocity / 2 : 0
-        );
+        if (this.reduceVelocity)
+            this.velocity.lerp(Vector.ZERO, 0.05);
+        if (this.reduceAngularVelocity)
+            this.angularVelocity = lerp(this.angularVelocity, 0, 0.1);
+        // this._addVelocity(
+        //     this.reduceVelocity ?  : Vector.ZERO,
+        //     this.reduceAngularVelocity ? -this.angularVelocity / 2 : 0
+        // );
     }
 
     /**
      * 
-     * @param {Vector} dot
+     * @param {Array<Vector>} dotInfo
      * @param {DynamicObject} object 
      */
-    onCollide(dot, object) {
+    onCollide(dotInfo, object) {
         return true; // можно было бы собитиями сделать, но с пулями это будет не очень эффективно
+        // да и проще переопределить метод, чем добавлять событие
     }
 
     destroy() {
         super.destroy();
 
         delete World.DynamicObjects[this.id];
+    }
+
+    clearDebug() {
+        super.clearDebug();
+        for (let b = 0; b < this.collider.length; b++) {
+            Debug.erase(`${this.id} ${b}`);
+        }
+        Debug.erase(`${this.id} velocity`);
     }
 }
 
@@ -345,15 +362,38 @@ class DamageableObject extends DynamicObject {
     defaultConstructor(uniqueId, animatorParams, startState, x, y) {
         super.defaultConstructor(uniqueId, animatorParams, startState, x, y);
 
+        this.damageParticleSystem = new ParticleSystem(this.addChild(null, null, null), Vector.ZERO, 1, DegToRad(90));
+        this.damageParticleSystem.speed = 200;
+        this.damageParticleSystem.randomizeSpeed = true;
+
         World.DamagableObjects[this.id] = this;
     }
 
-    damage(value) {
+    damage(value, dotInfo) {
         this.health -= value;
 
         if (this.health <= 0) {
             this.destroy();
+            return;
         }
+
+        if (!dotInfo)
+            return;
+
+        let dot = dotInfo[0].new();
+        let n1 = dotInfo[1].new().remove(dot);
+        let n2 = dotInfo[2].new().remove(dot);
+        let n = n1.new().add(n2);
+
+        let x = this.damageParticleSystem.object.globalPosition.x - dot.x;
+        let y = this.damageParticleSystem.object.globalPosition.y - dot.y;
+        this.damageParticleSystem.object.x -= x;
+        this.damageParticleSystem.object.y -= y;
+
+        this.damageParticleSystem.object.updateGlobalPosition();
+
+        this.damageParticleSystem.setDirection(n1.multiply(-1));
+        this.damageParticleSystem.shot(10);
     }
 
     update(deltaTime) {
@@ -363,6 +403,9 @@ class DamageableObject extends DynamicObject {
     }
 
     destroy() {
+        this.damageParticleSystem.angleRange = 360;
+        this.damageParticleSystem.shot(this.damageParticleSystem.maxParticles);
+
         super.destroy();
         
         delete World.DamagableObjects[this.id];

@@ -69,8 +69,7 @@ body {
 
 .particle {
     position: absolute;
-
-    background-color: red;
-    width: 5px;
-    height: 5px;
+    width: 10px;
+    height: 10px;
+    transform: translate(-50%, -50%);
 }

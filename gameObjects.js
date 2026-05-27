@@ -29,28 +29,33 @@ class Ship extends DamageableObject {
         this.gun1 = this.addChild("gun1", gunAnimation, "idle", 0, 32);
         this.gun2 = this.addChild("gun2", gunAnimation, "idle", 0, -32);
 
-        this.particleSystem1 = new ParticleSystem(this.addChild(null, null, null, -32, 10), Vector.ZERO, 0);
-        this.particleSystem2 = new ParticleSystem(this.addChild(null, null, null, -32, -10), Vector.ZERO, 0);
+        let lifeTime = 0.2;
+        let angle = DegToRad(30)
+        let color = [0, 128, 255];
+        this.particleSystem1 = new ParticleSystem(this.addChild(null, null, null, -35, 10), Vector.ZERO, lifeTime, angle, color);
+        this.particleSystem2 = new ParticleSystem(this.addChild(null, null, null, -35, -10), Vector.ZERO, lifeTime, angle, color);
+
+        this.damageParticleSystem.color = [64, 64, 64];
     }
 
     input(velocity, angularVelocity) {
         this.addVelocity(velocity, angularVelocity);
 
-        this.particleSystem1.setDirection(velocity);
-        this.particleSystem2.setDirection(velocity);
-
+        if (!this.reduceVelocity)
+            this.shotParticles(velocity);
 
         if (velocity.x == 0 && velocity.y == 0 && this.animator.state != "idle")
             this.animator.setState("idle");
         else if (velocity.x != 0 && velocity.y != 0 && this.animator.state != "move") {
             this.animator.setState("move");
-        this.particleSystem1.shot();
-        this.particleSystem2.shot();
         }
     }
 
-    _addVelocity(velocity, angularVelocity) {
-        super._addVelocity(velocity, angularVelocity);
+    shotParticles(velocity) {
+        this.particleSystem1.setDirection(velocity);
+        this.particleSystem2.setDirection(velocity);
+        this.particleSystem1.shot();
+        this.particleSystem2.shot();
     }
 
     /**
@@ -133,6 +138,8 @@ class Bullet extends DynamicObject {
 
         console.log("BULLET");
 
+        this.reduceVelocity = false;
+
         this.timer = setTimeout(() => this.destroy(), 1000);
     }
 
@@ -155,17 +162,17 @@ class Bullet extends DynamicObject {
 
     /**
      * 
-     * @param {Vector} dot
+     * @param {Array<Vector>} dotInfo
      * @param {DamageableObject} object 
      */
-    onCollide(dot, object) {
+    onCollide(dotInfo, object) {
         let isBullet = object instanceof Bullet;
         let isOwner = object == this.owner;
         let isDamagable = object instanceof DamageableObject;
 
         if (!isBullet && !isOwner && isDamagable) {
             clearTimeout(this.timer);
-            object.damage(this.damage);
+            object.damage(this.damage, dotInfo);
             this.destroy();
         }
 
@@ -181,6 +188,10 @@ class Bullet extends DynamicObject {
     }
 }
 
+class Enemy extends Ship {
+
+}
+
 class Player extends Ship {
     constructor(x, y) {
         super("player", x, y);
@@ -188,7 +199,7 @@ class Player extends Ship {
 }
 
 class Meteorite extends DamageableObject {
-    constructor(x, y) {
+    constructor(x, y, material) {
         let collider = [
             new Vector(-0.15625, -0.5),
             new Vector(-0.5, -0.359),
@@ -198,5 +209,7 @@ class Meteorite extends DamageableObject {
         ];
 
         super(collider, null, meteoriteAnimation, "none", x, y, 1000);
+
+        this.damageParticleSystem.color = [128, 128, 128];
     }
 }

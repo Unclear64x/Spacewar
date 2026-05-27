@@ -5,27 +5,53 @@ class ParticleSystem {
     /**@type {Vector} */
     direction = new Vector(0, 0);
 
+    angleRange = 0;
+    
+    maxParticles = 50;
+    randomizeSpeed = false;
+    speed = 100;
+
     static #totalId;
     id;
 
     totalParticleId;
     particles = {};
 
-    constructor(object, direction, lifeTime) {
+    color;
+
+    lifeTime;
+
+    /**
+     * 
+     * @param {BaseObject} object 
+     * @param {Vector} direction 
+     * @param {Number} lifeTime 
+     * @param {Number} angle 
+     */
+    constructor(object, direction, lifeTime, angleRange, color = [0, 0, 0]) {
         this.object = object;
         this.setDirection(direction);
+        this.lifeTime = lifeTime;
+        this.color = color;
+        
+        this.angleRange = angleRange;
 
         this.id = ParticleSystem.#totalId++;
         World.ParticleSystems[this.id] = this;
     }
 
-    shot() {
-        let particles = Object.keys(this.particles);
-        if (particles.length >= 50) {
-            this.particles[particles[0]].destroy();
-        }
+    shot(count = 1) {
+        for (let i = 0; i < count; i++) {
+            let particles = Object.keys(this.particles);
+            if (particles.length >= this.maxParticles) {
+                this.particles[particles[0]].destroy();
+            }
 
-        new Particle(this, this.object.globalPosition.x, this.object.globalPosition.y, this.direction, 6);
+            let randomAngle = random(-this.angleRange / 2, this.angleRange / 2) + Math.atan2(-this.direction.y, -this.direction.x);
+            let particle = new Particle(this, this.object.globalPosition.x, this.object.globalPosition.y, randomAngle, this.lifeTime, this.color);
+
+            particle.speed = this.speed * (this.randomizeSpeed ? random(0.3, 1) : 1);
+        }
     }
 
     setDirection(direction) {
@@ -50,34 +76,47 @@ class ParticleSystem {
 }
 
 class Particle extends BaseObject {
-    fade = 0;
-    fadeProcess = 1;
+    lifeTime = 1;
+    time = 1
 
     system;
 
-    constructor(system, x, y, direction, fade) {
+    speed = 1;
+
+    color;
+
+    constructor(system, x, y, angle, lifeTime, color = [0, 0, 0]) {
         super(null, null, null, x, y);
         
         this.system = system;
-        this.angle = Math.atan2(-direction.y, -direction.x);
-        this.fade = fade;
+        this.angle = angle;
+        this.lifeTime = lifeTime;
+        this.time = lifeTime;
+        this.color = color;
 
-        this.object.setAttribute("class", "particle");
+        this.img = document.createElement("div");
+        this.img.setAttribute("class", "particle");
+        this.object.append(this.img);
 
         this.system.particles[this.id] = this;
     }
 
     update(deltaTime) {
         super.update();
-        this.fadeProcess = lerp(this.fadeProcess, 0, this.fade * deltaTime);
-        Debug.displayInfo("fade", this.fadeProcess);
-        if (this.fadeProcess <= 0.01) {
+
+        this.time -= deltaTime;
+
+        if (this.time <= 0) {
             this.destroy();
             return;
         }
 
-        this.x += this.forward.x * deltaTime;
-        this.y += this.forward.y * deltaTime;
+        let k = this.time / this.lifeTime;
+        this.img.style.backgroundColor = `rgba(${this.color[0] * k}, ${this.color[1] * k}, ${this.color[2] * k}, ${k})`;
+        Debug.displayInfo("this.color", this.color);
+
+        this.x += this.forward.x * deltaTime * this.speed;
+        this.y += this.forward.y * deltaTime * this.speed;
     }
 
     destroy() {

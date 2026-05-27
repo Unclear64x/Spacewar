@@ -25,9 +25,37 @@ let meteoriteAnimation = {
     }
 }
 
-let dotAnimation = {
-    "root": "dot",
+let materials = {
+    "metal": "materials/metal/icon.png",
+    "irit": "materials/irit/icon.png",
+    "borit": "materials/borit/icon.png",
+    "aneit": "materials/aneit/icon.png"
+}
+
+let MetalAnimation = {
+    "root": "materials/metal",
     "states": {
-        "none": [1, 0]
+        "none": [5, 200]
+    }
+}
+
+let IritAnimation = {
+    "root": "materials/irit",
+    "states": {
+        "none": [5, 200]
+    }
+}
+
+let BoritAnimation = {
+    "root": "materials/borit",
+    "states": {
+        "none": [5, 200]
+    }
+}
+
+let AneitAnimation = {
+    "root": "materials/aneit",
+    "states": {
+        "none": [5, 200]
     }
 }

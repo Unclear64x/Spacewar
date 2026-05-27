@@ -33,6 +33,8 @@ function update(currentTime) {
     Debug.displayInfo("DynamicObjects", Object.keys(World.DynamicObjects).length);
     Camera.debug();
 
+    Debug.update();
+
     requestAnimationFrame(update);
 }
 
@@ -101,9 +103,8 @@ function physycs() {
 
 function addEventListeners() {
     window.addEventListener("DOMContentLoaded", (e) => {
-        loadStorage();
-        
         Input.init();
+        Debug.init();
 
         World.Space = document.getElementById("space");
         World.Space.addEventListener('dragstart', (e) => e.preventDefault());
@@ -113,8 +114,4 @@ function addEventListeners() {
 
         update(0);
     });
-}
-
-function loadStorage() {
-    Debug.load();
 }

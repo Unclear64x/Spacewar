@@ -2,161 +2,168 @@ class Debug {
     static #enabled = false;
 
     /**@type {SVGSVGElement} */
-    static #displayedLinesObject;
-    /**@type {Object<any, SVGPolylineElement>} */
-    static #displayedLines = {};
-
-    /**@type {Object<any, BaseObject>} */
-    static #displayedDots = {};
-
-    /**@type {Object<any, BaseObject>} */
-    static #displayedTexts = {};
+    static #canvas;
+    static #canvasData = {};
 
     /**@type {HTMLElement} */
-    static #displayedInfoObject;
-    /**@type {Object<String, String>} */
-    static #displayedInfos = {};
-
-    /**@type {SVGSVGElement} */
-    static #canvas;
-    static #data = {};
+    static #info;
+    static #infoData = {};
 
     static clear() {
-        for (let i in Debug.#displayedLines) {
-            Debug.#displayedLines[i].remove();
-            delete Debug.#displayedLines[i];
+        for (let i in Debug.#canvasData) {
+            Debug.#canvasData[i].remove();
+            delete Debug.#canvasData[i];
         }
-        for (let i in Debug.#displayedDots) {
-            Debug.#displayedDots[i].destroy();
-            delete Debug.#displayedDots[i];
-        }
-        for (let i in Debug.#displayedTexts) {
-            Debug.#displayedTexts[i].destroy();
-            delete Debug.#displayedTexts[i];
+
+        for (let i in Debug.#infoData) {
+            delete Debug.#infoData[i];
         }
     }
 
-    static getAll() {
-        return [Debug.#displayedLines, Debug.#displayedDots, Debug.#displayedTexts];
+    static erase(id) {
+        if (id in Debug.#canvasData) {
+            Debug.#canvasData[id].remove();
+            delete Debug.#canvasData[id];
+        }
+
+        if (id in Debug.#infoData) {
+            delete Debug.#infoData[id];
+        }
     }
 
     static switchVisible() {
         if (Debug.#enabled)
             Debug.clear(true);
-        Debug.#enabled = !Debug.#enabled;
 
-        if (Debug.#displayedInfoObject)
-            Debug.#displayedInfoObject.style.display = Debug.#enabled ? "inline" : "none";
+        Debug.#setVisible(!Debug.#enabled);
+    }
+
+    static #setVisible(value) {
+        Debug.#enabled = value;
+
+        Debug.#canvas.style.display = Debug.#enabled ? "inline" : "none";
+        Debug.#info.style.display = Debug.#enabled ? "inline" : "none";
 
         localStorage.setItem("Debug", Debug.#enabled);
     }
 
     /**
      * Отображает линию по двум точкам в глобальных координатах
-     * @param {any} lineId 
-     * @param {Vector} dot1 
-     * @param {Vector} dot2 
+     * @param {any} id 
+     * @param {Vector} from 
+     * @param {Vector} to 
      * @param {String} color 
      * @returns 
      */
-    static displayLine(lineId, dot1, dot2, color) {
+    static displayLine(id, from, to, color) {
         if (!Debug.#enabled)
             return;
 
-        if (!Debug.#displayedLinesObject) {
-            Debug.#displayedLinesObject = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-            Debug.#displayedLinesObject.setAttribute("class", "debugSpace");
-            document.getElementById("space").append(Debug.#displayedLinesObject);
+        if (!Debug.#canvasData[id]) {
+            let line = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+            line.setAttribute("fill", "none");
+            line.setAttribute("stroke",  color);
+            line.setAttribute("stroke-width", "1");
+            line.setAttribute("id", id);
+            Debug.#canvas.append(line);
+            Debug.#canvasData[id] = line;
         }
 
-        if (!Debug.#displayedLines[lineId]) {
-            let polyLine = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-            polyLine.setAttribute("fill", "none");
-            polyLine.setAttribute("stroke",  color);
-            polyLine.setAttribute("stroke-width", "2");
-            polyLine.setAttribute("id", lineId);
-            Debug.#displayedLinesObject.append(polyLine);
-            Debug.#displayedLines[lineId] = polyLine;
-        }
-
-        Debug.#displayedLines[lineId].setAttribute("points", `${dot1.x},${dot1.y} ${dot2.x},${dot2.y}`);
+        Debug.#canvasData[id].setAttribute("points", `${from.x},${from.y} ${to.x},${to.y}`);
     }
 
     /**
      * Отображает токчку в глобальных координатах
-     * @param {any} dotId 
+     * @param {any} id 
      * @param {Vector} position
      * @param {String} color 
      * @returns 
      */
-    static displayDot(dotId, position, color) {
+    static displayDot(id, position, color) {
         if (!Debug.#enabled)
             return;
 
-        if (!Debug.#displayedDots[dotId]) {
-            let dot = new BaseObject(dotId, null, null);
-            dot.img = document.createElement("div");
-            dot.img.setAttribute("class", "debugDot");
-            dot.img.style.backgroundColor = color;
-            dot.object.setAttribute("id", dotId);
-            dot.object.appendChild(dot.img);
-            Debug.#displayedDots[dotId] = dot;
+        if (!Debug.#canvasData[id]) {
+            let dot = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+            dot.setAttribute("r", "4");
+            dot.setAttribute("fill", color);
+            dot.setAttribute("id", id);
+            Debug.#canvas.append(dot);
+            Debug.#canvasData[id] = dot;
         }
 
-        Debug.#displayedDots[dotId].x = position.x;
-        Debug.#displayedDots[dotId].y = position.y;
+        Debug.#canvasData[id].setAttribute("cx", position.x);
+        Debug.#canvasData[id].setAttribute("cy", position.y);
     }
 
     /**
      * 
-     * @param {any} textId 
+     * @param {any} id 
      * @param {Vector} position 
      * @param {String} value
      * @returns 
      */
-    static displayText(textId, position, value) {
+    static displayText(id, position, value) {
         if (!Debug.#enabled)
             return;
 
-        if (!Debug.#displayedTexts[textId]) {
-            let text = new BaseObject(textId, null, null);
-            text.object.setAttribute("class", "debugText");
-            text.object.setAttribute("id", textId);
-            Debug.#displayedTexts[textId] = text;
+        if (!Debug.#canvasData[id]) {
+            let text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("font-family", "consolas");
+            text.setAttribute("font-size", "12");
+            text.setAttribute("fill", "lime");
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("dominant-baseline", "central");
+            text.setAttribute("id", id);
+            Debug.#canvas.append(text);
+            Debug.#canvasData[id] = text;
         }
 
-        Debug.#displayedTexts[textId].object.innerText = value;
-        Debug.#displayedTexts[textId].x = position.x;
-        Debug.#displayedTexts[textId].y = position.y;
+        Debug.#canvasData[id].setAttribute("x", position.x);
+        Debug.#canvasData[id].setAttribute("y", position.y);
+        MultilineSVGText(Debug.#canvasData[id], value);
     }
 
     /**
      * 
-     * @param {String} infoId 
+     * @param {String} id 
      * @param {String} value 
      */
-    static displayInfo(infoId, value) {
+    static displayInfo(id, value) {
+        if (!Debug.#enabled)
+            return;
+        
+        Debug.#infoData[id] = value;
+    }
+
+    static init() {
+        Debug.#canvas = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        Debug.#canvas.setAttribute("class", "debugSpace");
+        document.getElementById("space").append(Debug.#canvas);
+
+        Debug.#info = document.createElement("pre")
+        Debug.#info.setAttribute("class", "debugText debugInfo");
+        document.body.append(Debug.#info);
+
+        Debug.#setVisible(localStorage.getItem("Debug") == "true");
+
+        window.addEventListener("mousedown", (e) => {
+            if (Input.keyPressed(Button.MMB)) {
+                Debug.switchVisible();
+            }
+        });
+    }
+
+    static update() {
         if (!Debug.#enabled)
             return;
 
-        if (!Debug.#displayedInfoObject) {
-            Debug.#displayedInfoObject = document.createElement("pre")
-            Debug.#displayedInfoObject.setAttribute("class", "debugText debugInfo");
-            document.body.append(Debug.#displayedInfoObject);
-        }
-        
-        Debug.#displayedInfos[infoId] = value;
+        let infoText = "";
 
-        let text = "";
-
-        for (let i in Debug.#displayedInfos) {
-            text += `${i}: ${Debug.#displayedInfos[i]}\n`;
+        for (let i in Debug.#infoData) {
+            infoText += `${i}: ${Debug.#infoData[i]}\n`;
         }
 
-        Debug.#displayedInfoObject.innerText = text;
-    }
-
-    static load() {
-        Debug.#enabled = localStorage.getItem("Debug") == "true";
+        Debug.#info.innerText = infoText;
     }
 }

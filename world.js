@@ -12,4 +12,8 @@ class World {
     static DamagableObjects = {};
 
     static ParticleSystems = {};
+
+    static Enemies = {};
+
+    static Meteorites = {};
 }
