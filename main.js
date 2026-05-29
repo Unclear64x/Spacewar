@@ -26,14 +26,14 @@ function update(currentTime) {
         World.Objects[i].update(delta);
     }
 
-    Camera.update();
+    GameManager.update();
 
     Debug.displayInfo("UPS", 1000 / delta);
     Debug.displayInfo("Objects", Object.keys(World.Objects).length);
     Debug.displayInfo("DynamicObjects", Object.keys(World.DynamicObjects).length);
-    Camera.debug();
 
-    Debug.update();
+    Camera.update();
+    Debug.update(Camera.ctx);
 
     requestAnimationFrame(update);
 }
@@ -101,17 +101,26 @@ function physycs() {
     }
 }
 
+function resize() {
+    Camera.canvas.width = window.innerWidth;
+    Camera.canvas.height = window.innerHeight;
+}
+
 function addEventListeners() {
     window.addEventListener("DOMContentLoaded", (e) => {
         Input.init();
         Debug.init();
+        Camera.init();
 
-        World.Space = document.getElementById("space");
-        World.Space.addEventListener('dragstart', (e) => e.preventDefault());
+        window.addEventListener("resize", resize);
 
-        World.Player = new Player(200000 / 2, 200000 / 2);
+        //World.Space = document.getElementById("space");
+        //World.Space.addEventListener('dragstart', (e) => e.preventDefault());
+
+        World.Player = new Player(0, 0);
         new Meteorite(World.Player.x + 200, World.Player.y);
 
+        resize();
         update(0);
     });
 }

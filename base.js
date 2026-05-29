@@ -8,8 +8,8 @@ class Animator {
     /**@type {Object<String, Number>} длительность фрейма между состояниями*/
     durations = {};
 
-    /**@type {HTMLImageElement} объект анимации, <img>*/
-    obj = null;
+    /**@type {Object} объект анимации*/
+    obj;
 
     /**@type {Number} id таймера*/
     timer = 0;
@@ -28,7 +28,7 @@ class Animator {
     /**
      * 
      * @param {Object} params параметры анимации
-     * @param {HTMLImageElement} target объект анимации, <img>
+     * @param {Object} target объект анимации
      * @param {String} startState начальное состояние
      */
     constructor(params, target, startState) {
@@ -104,7 +104,7 @@ class Animator {
     }
 
     nextFrame(oneShot) {
-        this.obj.src = this.states[this.state][this.frame++].src;
+        this.obj.src = this.states[this.state][this.frame++];
         this.frame %= this.frames;
         if (oneShot && this.frame == 0) {
             clearInterval(this.timer);

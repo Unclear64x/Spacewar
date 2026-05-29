@@ -7,6 +7,8 @@ class World {
 
     static Objects = {};
 
+    static VisualObjects = {};
+
     static DynamicObjects = {};
 
     static DamagableObjects = {};

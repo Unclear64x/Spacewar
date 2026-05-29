@@ -8,6 +8,10 @@ class Camera {
     /**@type {Vector} */
     static position = new Vector(0, 0);
 
+    static canvas;
+    /**@type {CanvasRenderingContext2D} */
+    static ctx;
+
     static update() {
         // let distances = [];
 
@@ -34,12 +38,41 @@ class Camera {
         const k = 0.1;
         Camera.position.set(lerp(Camera.position.x, x, k), lerp(Camera.position.y, y, k))
 
-        World.Space.style.transform = `translate(${Camera.position.x}px, ${Camera.position.y}px)`;
+        //World.Space.style.transform = `translate(${Camera.position.x}px, ${Camera.position.y}px)`;
+
+        let ctx = Camera.ctx;
+        ctx.clearRect(0, 0, Camera.canvas.width, Camera.canvas.height);
+
+        let size = 500;
+        let parallax = 1;
+        let offsetX = Math.round(((Camera.position.x) * parallax) % size);
+        let offsetY = Math.round(((Camera.position.y) * parallax) % size);
+
+        Debug.displayInfo("camera", `${Camera.position.x} ${Camera.position.y}`);
+
+        ctx.save();
+        for (let x = offsetX - size; x - size < window.innerWidth; x += size) {
+            for (let y = offsetY - size; y - size < window.innerHeight; y += size) {
+                ctx.drawImage(spaceImage, x | 0, y);
+            }
+        }
+        ctx.restore();
+
+        for (let i in World.Objects) {
+            World.Objects[i].render(Camera.ctx);
+        }
+
+        Camera.debug();
     }
 
     static debug() {
         Debug.displayDot("cameraFocus", Camera.focus.new().add(World.Player.globalPosition), "lime");
         Debug.displayDot("cursorPosition", Input.CursorGlobal, "red");
         Debug.displayDot("cameraPosition", Camera.position.new().multiply(-1).add2(window.innerWidth / 2, window.innerHeight / 2), "red");
+    }
+
+    static init() {
+        Camera.canvas = document.getElementById("canvas");
+        Camera.ctx = Camera.canvas.getContext("2d");
     }
 }

@@ -17,6 +17,10 @@ class BaseObject {
     globalPosition = new Vector(0, 0);
     /**@type {Number} */
     globalRotation = 0;
+    img = {"src": null};
+
+    width = 0;
+    height = 0;
 
     static #totalId = 0;
 
@@ -33,8 +37,11 @@ class BaseObject {
      * @param {Number} x позиция X
      * @param {Number} y позиция Y
      */
-    constructor(uniqueId, animatorParams, startState, x = 0, y = 0) {
+    constructor(uniqueId, animatorParams, startState, x = 0, y = 0, width = 64, height = 64) {
         this.id = BaseObject.#totalId++;
+
+        this.width = width;
+        this.height = height;
 
         console.log(uniqueId, animatorParams, startState, x, y);
 
@@ -50,31 +57,56 @@ class BaseObject {
      * @param {Number} y позиция Y
      */
     defaultConstructor(uniqueId, animatorParams, startState, x, y) {
-        this.object = document.createElement("div");
-        this.object.className = "object";
-        if (uniqueId)
-            this.object.id = uniqueId;
+        // this.object = document.createElement("div");
+        // this.object.className = "object";
+        // if (uniqueId)
+        //     this.object.id = uniqueId;
 
         this.x = x;
         this.y = y;
 
         if (animatorParams && startState) {
-            this.img = document.createElement("img");
-            this.img.className = "image";
-            this.img.addEventListener('dragstart', (e) => e.preventDefault());
-            this.object.append(this.img);
+            // this.img = document.createElement("img");
+            // this.img.className = "image";
+            // this.img.addEventListener('dragstart', (e) => e.preventDefault());
+            // this.object.append(this.img);
 
             this.animator = new Animator(animatorParams, this.img, startState);
         }
 
-        World.Space.append(this.object);
+        //World.Space.append(this.object);
         World.Objects[this.id] = this;
     }
 
-    addChild(uniqueId, animatorParams, startState, x = 0, y = 0) {
-        let child = new ChildObject(this, uniqueId, animatorParams, startState, x, y);
+    /**
+     * 
+     * @param {CanvasRenderingContext2D} ctx 
+     */
+    render(ctx) {
+        ctx.save();
+
+        ctx.translate(this.globalPosition.x + Camera.position.x, this.globalPosition.y + Camera.position.y);
+        ctx.rotate(this.globalRotation);
+
+        this._renderContent(ctx);
+
+        ctx.restore();
+    }
+
+    /**
+     * 
+     * @param {CanvasRenderingContext2D} ctx 
+     */
+    _renderContent(ctx) {
+        if (!this.img.src)
+            return;
+        ctx.drawImage(this.img.src, -this.width / 2, -this.height / 2, this.width, this.height);
+    }
+
+    addChild(uniqueId, animatorParams, startState, x = 0, y = 0, width = 64, height = 64) {
+        let child = new ChildObject(this, uniqueId, animatorParams, startState, x, y, width, height);
         this.children.push(child);
-        this.object.append(child.object);
+        //this.object.append(child.object);
         return child;
     }
 
@@ -83,9 +115,10 @@ class BaseObject {
         this.updateGlobalRotation();
         this.forward.set(Math.cos(this.globalRotation), Math.sin(this.globalRotation));
 
-        this.object.style.transform = `translate(${this.x}px, ${this.y}px) rotate(${this.angle}rad)`
+        //this.object.style.transform = `translate(${this.x}px, ${this.y}px) rotate(${this.angle}rad)`
 
         Debug.displayLine(`${this.id} forward`, this.globalPosition, this.forward.new().multiply(100).add(this.globalPosition), "purple");
+        Debug.displayDot(`${this.id} center`, this.globalPosition, "purple");
 
         for (let i = 0; i < this.children.length; i++) {
             this.children[i].update();
@@ -102,6 +135,7 @@ class BaseObject {
 
     clearDebug() {
         Debug.erase(`${this.id} forward`);
+        Debug.erase(`${this.id} center`);
     }
 
     destroy() {
@@ -114,7 +148,7 @@ class BaseObject {
         }
 
         delete World.Objects[this.id];
-        this.object.remove();
+        // this.object.remove();
         this.clearDebug();
     }
 }
@@ -131,8 +165,8 @@ class ChildObject extends BaseObject {
      * @param {Number} x 
      * @param {Number} y 
      */
-    constructor(parent, uniqueId, animatorParams, startState, x = 0, y = 0) {
-        super(uniqueId, animatorParams, startState, x, y);
+    constructor(parent, uniqueId, animatorParams, startState, x = 0, y = 0, width = 64, height = 64) {
+        super(uniqueId, animatorParams, startState, x, y, width, height);
 
         this.parent = parent;
     }
@@ -381,15 +415,21 @@ class DamageableObject extends DynamicObject {
             return;
 
         let dot = dotInfo[0].new();
+        Debug.displayDot("hitDotAfter", dot, "red");
         let n1 = dotInfo[1].new().remove(dot);
         let n2 = dotInfo[2].new().remove(dot);
         let n = n1.new().add(n2);
 
-        let x = this.damageParticleSystem.object.globalPosition.x - dot.x;
-        let y = this.damageParticleSystem.object.globalPosition.y - dot.y;
-        this.damageParticleSystem.object.x -= x;
-        this.damageParticleSystem.object.y -= y;
+        let cos = Math.cos(this.damageParticleSystem.object.parent.angle);
+        let sin = Math.sin(this.damageParticleSystem.object.parent.angle);
 
+        let x = dot.x - this.damageParticleSystem.object.parent.globalPosition.x;
+        let y = dot.y - this.damageParticleSystem.object.parent.globalPosition.y;
+        x = x * cos + y * sin;
+        y = -x * sin + y * cos;
+        this.damageParticleSystem.object.x = x;
+        this.damageParticleSystem.object.y = y;
+        
         this.damageParticleSystem.object.updateGlobalPosition();
 
         this.damageParticleSystem.setDirection(n1.multiply(-1));
@@ -399,7 +439,7 @@ class DamageableObject extends DynamicObject {
     update(deltaTime) {
         super.update(deltaTime);
 
-        Debug.displayText(`health${this.id}`, this.globalPosition.new().add2(0, 64), this.health);
+        Debug.displayText(`health ${this.id}`, this.globalPosition.new().add2(0, 64), this.health);
     }
 
     destroy() {
@@ -409,5 +449,10 @@ class DamageableObject extends DynamicObject {
         super.destroy();
         
         delete World.DamagableObjects[this.id];
+    }
+
+    clearDebug() {
+        super.clearDebug();
+        Debug.erase(`health ${this.id}`);
     }
 }

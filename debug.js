@@ -1,18 +1,13 @@
 class Debug {
     static #enabled = false;
 
-    /**@type {SVGSVGElement} */
-    static #canvas;
-    static #canvasData = {};
-
-    /**@type {HTMLElement} */
-    static #info;
+    static #data = {};
     static #infoData = {};
 
     static clear() {
-        for (let i in Debug.#canvasData) {
-            Debug.#canvasData[i].remove();
-            delete Debug.#canvasData[i];
+        for (let i in Debug.#data) {
+            // Debug.#data[i].remove();
+            delete Debug.#data[i];
         }
 
         for (let i in Debug.#infoData) {
@@ -21,9 +16,9 @@ class Debug {
     }
 
     static erase(id) {
-        if (id in Debug.#canvasData) {
-            Debug.#canvasData[id].remove();
-            delete Debug.#canvasData[id];
+        if (id in Debug.#data) {
+            //Debug.#data[id].remove();
+            delete Debug.#data[id];
         }
 
         if (id in Debug.#infoData) {
@@ -36,13 +31,15 @@ class Debug {
             Debug.clear(true);
 
         Debug.#setVisible(!Debug.#enabled);
+
+        return Debug.#enabled;
     }
 
     static #setVisible(value) {
         Debug.#enabled = value;
 
-        Debug.#canvas.style.display = Debug.#enabled ? "inline" : "none";
-        Debug.#info.style.display = Debug.#enabled ? "inline" : "none";
+        // Debug.#canvas.style.display = Debug.#enabled ? "inline" : "none";
+        // Debug.#info.style.display = Debug.#enabled ? "inline" : "none";
 
         localStorage.setItem("Debug", Debug.#enabled);
     }
@@ -53,23 +50,20 @@ class Debug {
      * @param {Vector} from 
      * @param {Vector} to 
      * @param {String} color 
-     * @returns 
      */
     static displayLine(id, from, to, color) {
         if (!Debug.#enabled)
             return;
 
-        if (!Debug.#canvasData[id]) {
-            let line = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-            line.setAttribute("fill", "none");
-            line.setAttribute("stroke",  color);
-            line.setAttribute("stroke-width", "1");
-            line.setAttribute("id", id);
-            Debug.#canvas.append(line);
-            Debug.#canvasData[id] = line;
-        }
+        if (!Debug.#data[id]) 
+            Debug.#data[id] = {"type": "line"};
 
-        Debug.#canvasData[id].setAttribute("points", `${from.x},${from.y} ${to.x},${to.y}`);
+        Debug.#data[id].fromX = from.x;
+        Debug.#data[id].fromY = from.y;
+        Debug.#data[id].toX = to.x;
+        Debug.#data[id].toY = to.y;
+        Debug.#data[id].color = color;
+        // Debug.#data[id].setAttribute("points", `${from.x},${from.y} ${to.x},${to.y}`);
     }
 
     /**
@@ -79,21 +73,19 @@ class Debug {
      * @param {String} color 
      * @returns 
      */
-    static displayDot(id, position, color) {
+    static displayDot(id, position, color,) {
         if (!Debug.#enabled)
             return;
 
-        if (!Debug.#canvasData[id]) {
-            let dot = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-            dot.setAttribute("r", "4");
-            dot.setAttribute("fill", color);
-            dot.setAttribute("id", id);
-            Debug.#canvas.append(dot);
-            Debug.#canvasData[id] = dot;
-        }
+        if (!Debug.#data[id])
+            Debug.#data[id] = {"type": "dot"};
 
-        Debug.#canvasData[id].setAttribute("cx", position.x);
-        Debug.#canvasData[id].setAttribute("cy", position.y);
+
+        Debug.#data[id].x = position.x;
+        Debug.#data[id].y = position.y;
+        Debug.#data[id].color = color;
+        // Debug.#data[id].setAttribute("cx", position.x);
+        // Debug.#data[id].setAttribute("cy", position.y);
     }
 
     /**
@@ -107,21 +99,16 @@ class Debug {
         if (!Debug.#enabled)
             return;
 
-        if (!Debug.#canvasData[id]) {
-            let text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            text.setAttribute("font-family", "consolas");
-            text.setAttribute("font-size", "12");
-            text.setAttribute("fill", "lime");
-            text.setAttribute("text-anchor", "middle");
-            text.setAttribute("dominant-baseline", "central");
-            text.setAttribute("id", id);
-            Debug.#canvas.append(text);
-            Debug.#canvasData[id] = text;
-        }
+        if (!Debug.#data[id])
+            Debug.#data[id] = {"type": "text"};
 
-        Debug.#canvasData[id].setAttribute("x", position.x);
-        Debug.#canvasData[id].setAttribute("y", position.y);
-        MultilineSVGText(Debug.#canvasData[id], value);
+        Debug.#data[id].x = position.x;
+        Debug.#data[id].y = position.y;
+        Debug.#data[id].value = value;
+
+        // Debug.#data[id].setAttribute("x", position.x);
+        // Debug.#data[id].setAttribute("y", position.y);
+        // MultilineSVGText(Debug.#data[id], value);
     }
 
     /**
@@ -136,14 +123,75 @@ class Debug {
         Debug.#infoData[id] = value;
     }
 
-    static init() {
-        Debug.#canvas = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        Debug.#canvas.setAttribute("class", "debugSpace");
-        document.getElementById("space").append(Debug.#canvas);
+    static update() {
+        let ctx = Camera.ctx;
 
-        Debug.#info = document.createElement("pre")
-        Debug.#info.setAttribute("class", "debugText debugInfo");
-        document.body.append(Debug.#info);
+        let y = 0;
+        for (let i in Debug.#infoData) {
+            ctx.save();
+            ctx.translate(20, y);
+            ctx.font = "bold 12px consolas";
+            ctx.textBaseline = "top";
+            ctx.fillStyle = "lime";
+            ctx.fillText(`${i}: ${Debug.#infoData[i]}`, 0, 0);
+            ctx.restore();
+            y += 14;
+        }
+
+        for (let i in Debug.#data) {
+            Debug.#draw(ctx, Debug.#data[i]);
+        }
+    }
+
+    /**
+     * 
+     * @param {CanvasRenderingContext2D} ctx 
+     * @param {*} object 
+     */
+    static #draw(ctx, object) {
+        ctx.save();
+
+        let x = Camera.position.x;
+        let y = Camera.position.y;
+
+        switch (object.type) {
+            case "text":
+                ctx.translate(object.x + x, object.y + y);
+                ctx.font = "bold 12px consolas";
+                ctx.fillStyle = "lime";
+                ctx.textAlign = "center";
+                ctx.fillText(object.value, 0, 0);
+                break;
+            
+            case "line":
+                ctx.translate(object.fromX + x, object.fromY + y);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(object.toX - object.fromX, object.toY - object.fromY);
+                ctx.strokeStyle = object.color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                break;
+            
+            case "dot":
+                ctx.translate(object.x + x, object.y + y);
+                ctx.beginPath();
+                ctx.arc(0, 0, 3, 0, Math.PI * 2)
+                ctx.fillStyle = object.color;
+                ctx.fill();
+        }
+        
+        ctx.restore();
+    }
+
+    static init() {
+        // Debug.#canvas = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        // Debug.#canvas.setAttribute("class", "debugSpace");
+        // document.getElementById("space").append(Debug.#canvas);
+
+        // Debug.#info = document.createElement("pre")
+        // Debug.#info.setAttribute("class", "debugText debugInfo");
+        // document.body.append(Debug.#info);
 
         Debug.#setVisible(localStorage.getItem("Debug") == "true");
 
@@ -152,18 +200,5 @@ class Debug {
                 Debug.switchVisible();
             }
         });
-    }
-
-    static update() {
-        if (!Debug.#enabled)
-            return;
-
-        let infoText = "";
-
-        for (let i in Debug.#infoData) {
-            infoText += `${i}: ${Debug.#infoData[i]}\n`;
-        }
-
-        Debug.#info.innerText = infoText;
     }
 }

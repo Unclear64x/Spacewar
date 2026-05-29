@@ -26,11 +26,11 @@ class Ship extends DamageableObject {
 
         super(collider, id, shipAnimation, "idle", x, y, 40);
 
-        this.gun1 = this.addChild("gun1", gunAnimation, "idle", 0, 32);
-        this.gun2 = this.addChild("gun2", gunAnimation, "idle", 0, -32);
+        this.gun1 = this.addChild("gun1", gunAnimation, "idle", 0, 32, 30, 10);
+        this.gun2 = this.addChild("gun2", gunAnimation, "idle", 0, -32, 30, 10);
 
         let lifeTime = 0.2;
-        let angle = DegToRad(30)
+        let angle = DegToRad(50)
         let color = [0, 128, 255];
         this.particleSystem1 = new ParticleSystem(this.addChild(null, null, null, -35, 10), Vector.ZERO, lifeTime, angle, color);
         this.particleSystem2 = new ParticleSystem(this.addChild(null, null, null, -35, -10), Vector.ZERO, lifeTime, angle, color);
@@ -97,7 +97,7 @@ class Bullet extends DynamicObject {
     /**@type {HTMLElement} */
     bullet;
     /**@type {Vector} */
-    start;
+    tail;
     /**@type {Number} */
     damage;
     /**@type {DynamicObject} */
@@ -105,7 +105,9 @@ class Bullet extends DynamicObject {
 
     timer = 0;
 
-    width = 1;
+    width = 0;
+
+    tracerLength = 150;
 
     static Speed = 1000;
 
@@ -125,18 +127,16 @@ class Bullet extends DynamicObject {
         
         this.owner = owner;
 
-        this.bullet = document.createElement("div");
-        this.bullet.className = "bullet";
-        this.object.append(this.bullet);
+        // this.bullet = document.createElement("div");
+        // this.bullet.className = "bullet";
+        // this.object.append(this.bullet);
         this.angle = Math.atan2(forward.y, forward.x);
 
-        this.start = new Vector(x, y);
+        this.tail = new Vector(x, y);
 
         this.damage = damage;
 
         this.velocity.set2(forward.new().multiply(Bullet.Speed));
-
-        console.log("BULLET");
 
         this.reduceVelocity = false;
 
@@ -146,18 +146,40 @@ class Bullet extends DynamicObject {
     update(deltaTime) {
         super.update(deltaTime);
         
-        if (this.width >= 100 && !this.destroyed)
-            return;
+        let localTail = this.tail.new().remove(this.globalPosition);
+        let length = localTail.length();
 
-        this.width += deltaTime * 300 * (this.destroyed ? -2 : 1);
+        if (this.destroyed) 
+            this.tracerLength -= deltaTime * Bullet.Speed;
+        
+        if (this.destroyed || length > 150)
+            this.tail.set2(this.globalPosition.new().add(localTail.multiply(this.tracerLength / length)));
 
-        if (this.width <= 0) {
+        Debug.displayDot(`start ${this.id}`, this.globalPosition, "green");
+        Debug.displayDot(`end ${this.id}`, this.tail, "green");
+
+        if (this.destroyed && this.tracerLength <= 1) {
             this.destroyed = false;
             super.destroy();
             return;
         }
+    }
 
-        this.bullet.style.width = `${this.width}px`;
+    /**
+     * 
+     * @param {CanvasRenderingContext2D} ctx 
+     */
+    _renderContent(ctx) {
+        ctx.beginPath();
+        let length = -this.tail.new().remove(this.globalPosition).length();
+        let gradient = ctx.createLinearGradient(0, 0, length, 0);
+        gradient.addColorStop(0, "rgba(255,100,0,1)");
+        gradient.addColorStop(1, "rgba(128,0,0,0.2)");
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 4;
+        ctx.moveTo(0, 0);
+        ctx.lineTo(length, 0);
+        ctx.stroke();
     }
 
     /**
@@ -186,6 +208,12 @@ class Bullet extends DynamicObject {
         delete World.DynamicObjects[this.id];
         this.velocity.set(0, 0);
     }
+
+    clearDebug() {
+        super.clearDebug();
+        Debug.erase(`start ${this.id}`);
+        Debug.erase(`end ${this.id}`);
+    }
 }
 
 class Enemy extends Ship {
@@ -210,6 +238,24 @@ class Meteorite extends DamageableObject {
 
         super(collider, null, meteoriteAnimation, "none", x, y, 1000);
 
+        this.health = 10000;
+
         this.damageParticleSystem.color = [128, 128, 128];
+
+        World.Meteorites[this.id] = this;
+    }
+
+    update(deltaTime) {
+        super.update(deltaTime);
+
+        let distance = World.Player.globalPosition.new(this.globalPosition).length();
+
+        if (distance > window.innerWidth * 3 || distance > window.innerHeight * 3)
+            this.destroy();
+    }
+
+    destroy() {
+        super.destroy();
+        delete World.Meteorites[this.id];
     }
 }

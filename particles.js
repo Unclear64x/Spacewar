@@ -32,7 +32,7 @@ class ParticleSystem {
         this.object = object;
         this.setDirection(direction);
         this.lifeTime = lifeTime;
-        this.color = color;
+        this.color = color.slice();
         
         this.angleRange = angleRange;
 
@@ -40,7 +40,7 @@ class ParticleSystem {
         World.ParticleSystems[this.id] = this;
     }
 
-    shot(count = 1) {
+    shot(position, direction, count = 1) {
         for (let i = 0; i < count; i++) {
             let particles = Object.keys(this.particles);
             if (particles.length >= this.maxParticles) {
@@ -83,6 +83,7 @@ class Particle extends BaseObject {
 
     speed = 1;
 
+    sourceColor;
     color;
 
     constructor(system, x, y, angle, lifeTime, color = [0, 0, 0]) {
@@ -92,11 +93,12 @@ class Particle extends BaseObject {
         this.angle = angle;
         this.lifeTime = lifeTime;
         this.time = lifeTime;
+        this.sourceColor = color;
         this.color = color;
 
-        this.img = document.createElement("div");
-        this.img.setAttribute("class", "particle");
-        this.object.append(this.img);
+        // this.img = document.createElement("div");
+        // this.img.setAttribute("class", "particle");
+        // this.object.append(this.img);
 
         this.system.particles[this.id] = this;
     }
@@ -111,12 +113,18 @@ class Particle extends BaseObject {
             return;
         }
 
-        let k = this.time / this.lifeTime;
-        this.img.style.backgroundColor = `rgba(${this.color[0] * k}, ${this.color[1] * k}, ${this.color[2] * k}, ${k})`;
-        Debug.displayInfo("this.color", this.color);
-
         this.x += this.forward.x * deltaTime * this.speed;
         this.y += this.forward.y * deltaTime * this.speed;
+    }
+
+    /**
+     * 
+     * @param {CanvasRenderingContext2D} ctx 
+     */
+    _renderContent(ctx) {
+        let k = this.time / this.lifeTime;
+        ctx.fillStyle = `rgba(${this.color[0] * k}, ${this.color[1] * k}, ${this.color[2] * k}, ${k})`;
+        ctx.fillRect(-5, -5, 10, 10);
     }
 
     destroy() {

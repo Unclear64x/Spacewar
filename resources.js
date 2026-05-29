@@ -59,3 +59,6 @@ let AneitAnimation = {
         "none": [5, 200]
     }
 }
+
+let spaceImage = new Image();
+spaceImage.src = "sprites/space.png";
