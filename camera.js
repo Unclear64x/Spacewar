@@ -30,10 +30,11 @@ class Camera {
 
         Camera.focus.set2(Input.Cursor);
         
-        let x = window.innerWidth / 2 - World.Player.x - Camera.focus.x;
-        let y = window.innerHeight / 2 - World.Player.y - Camera.focus.y;
+        const debugZoom = Debug.isEnabled() ? 5 : 1
+        const x = Camera.canvas.width / 2 - World.Player.x - Camera.focus.x * debugZoom;
+        const y = Camera.canvas.height / 2 - World.Player.y - Camera.focus.y * debugZoom;
 
-        Input.CursorGlobal.set(-x + Input.Cursor.x, -y + Input.Cursor.y).add2(window.innerWidth / 2, window.innerHeight / 2);
+        Input.CursorGlobal.set(-x + Input.Cursor.x, -y + Input.Cursor.y).add2(Camera.canvas.width / 2, Camera.canvas.height / 2);
 
         const k = 0.1;
         Camera.position.set(lerp(Camera.position.x, x, k), lerp(Camera.position.y, y, k))
@@ -48,17 +49,19 @@ class Camera {
         let offsetX = Math.round(((Camera.position.x) * parallax) % size);
         let offsetY = Math.round(((Camera.position.y) * parallax) % size);
 
-        Debug.displayInfo("camera", `${Camera.position.x} ${Camera.position.y}`);
+        Debug.displayInfo("camera", "camera", `${Camera.position.x} ${Camera.position.y}`);
 
         ctx.save();
-        for (let x = offsetX - size; x - size < window.innerWidth; x += size) {
-            for (let y = offsetY - size; y - size < window.innerHeight; y += size) {
+        for (let x = offsetX - size; x - size < Camera.canvas.width; x += size) {
+            for (let y = offsetY - size; y - size < Camera.canvas.height; y += size) {
                 ctx.drawImage(spaceImage, x | 0, y);
             }
         }
         ctx.restore();
 
         for (let i in World.Objects) {
+            // if (World.Objects[i] instanceof Particle && World.Objects[i].globalPosition.x == 0 && World.Objects[i].globalPosition.y == 0)
+            //     console.log(World.Objects[i]);
             World.Objects[i].render(Camera.ctx);
         }
 
@@ -66,9 +69,8 @@ class Camera {
     }
 
     static debug() {
-        Debug.displayDot("cameraFocus", Camera.focus.new().add(World.Player.globalPosition), "lime");
-        Debug.displayDot("cursorPosition", Input.CursorGlobal, "red");
-        Debug.displayDot("cameraPosition", Camera.position.new().multiply(-1).add2(window.innerWidth / 2, window.innerHeight / 2), "red");
+        Debug.displayDot("cursorPosition", Input.CursorGlobal, "lime");
+        Debug.displayDot("cameraPosition", Camera.position.new().multiply(-1).add2(Camera.canvas.width / 2, Camera.canvas.height / 2), "red");
     }
 
     static init() {

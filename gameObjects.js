@@ -3,9 +3,7 @@ class Ship extends DamageableObject {
     gun1;
     /**@type {ChildObject} */
     gun2;
-    
-    /**@type {Number} выстрелы в секунду */
-    fireRate = 2;
+
     /**@type {Number} */
     gun1Timer;
     /**@type {Number} */
@@ -16,44 +14,125 @@ class Ship extends DamageableObject {
     /**@type {ParticleSystem} */
     particleSystem2;
 
-    constructor(id, x, y) {
+    /**@type {ShipParameters} */
+    shipParameters;
+
+    boost = 3;
+    charge = 1;
+    recharge = 0.2;
+    currentCharge = 0;
+    currentChargeTimer = 0;
+    
+    damage = 10;
+    fireRate = 2;
+
+    
+    static MoveColor = [0, 128, 255];
+    static BoostColor = [255, 128, 0];
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {Number} x 
+     * @param {Number} y 
+     * @param {ShipParameters} shipParameters 
+     */
+    constructor(id, x, y, shipParameters) {
         let collider = [
-            new Vector(0.5, 0.5),
-            new Vector(0.5, -0.5),
-            new Vector(-0.5, -0.5),
             new Vector(-0.5, 0.5),
+            new Vector(0, 0.5),
+            new Vector(0.5, 0.2),
+            new Vector(0.5, -0.2),
+            new Vector(0, -0.5),
+            new Vector(-0.5, -0.5)
+            // new Vector(0.5, 0.5),
+            // new Vector(0.5, -0.5),
+            // new Vector(-0.5, -0.5),
+            // new Vector(-0.5, 0.5),
         ];
 
         super(collider, id, shipAnimation, "idle", x, y, 40);
+
+
+        this.maxVelocity = shipParameters.maxVelocity;
+        this.tickVelocity = shipParameters.tickVelocity;
+
+        this.boost = shipParameters.boost;
+        this.charge = shipParameters.charge;
+        this.recharge = shipParameters.recharge;
+        this.fullRecharge = false;
+
+        this.damage = shipParameters.damage;
+        this.fireRate = shipParameters.fireRate;
+
+        this.health = shipParameters.health;
+
+        this.shipParameters = shipParameters;
+
 
         this.gun1 = this.addChild("gun1", gunAnimation, "idle", 0, 32, 30, 10);
         this.gun2 = this.addChild("gun2", gunAnimation, "idle", 0, -32, 30, 10);
 
         let lifeTime = 0.2;
-        let angle = DegToRad(50)
-        let color = [0, 128, 255];
-        this.particleSystem1 = new ParticleSystem(this.addChild(null, null, null, -35, 10), Vector.ZERO, lifeTime, angle, color);
-        this.particleSystem2 = new ParticleSystem(this.addChild(null, null, null, -35, -10), Vector.ZERO, lifeTime, angle, color);
+        let angle = DegToRad(50);
+        this.particleSystem1 = new ParticleSystem(this.addChild(null, null, null, -35, 10), Vector.ZERO, lifeTime, angle, Ship.MoveColor);
+        this.particleSystem2 = new ParticleSystem(this.addChild(null, null, null, -35, -10), Vector.ZERO, lifeTime, angle, Ship.MoveColor);
 
         this.damageParticleSystem.color = [64, 64, 64];
     }
 
-    input(velocity, angularVelocity) {
-        this.addVelocity(velocity, angularVelocity);
+    input(direction, angularVelocity, deltaTime, boost = false) {
+        boost = this.currentCharge > 0 && boost && !this.fullRecharge;
+        
+        let velocity = this.tickVelocity + boost? this.boost : 0;
+        this.addVelocity(direction.new().multiply(velocity), angularVelocity);
 
-        if (!this.reduceVelocity)
-            this.shotParticles(velocity);
+        this.particleSystem1.speed = velocity / 3 * 100;
+        this.particleSystem2.speed = this.particleSystem1.speed;
 
-        if (velocity.x == 0 && velocity.y == 0 && this.animator.state != "idle")
+        if (boost && (direction.x || direction.y)) {
+            this.currentChargeTimer = 0;
+            this.currentCharge = Math.max(0, this.currentCharge - deltaTime);
+            this.maxVelocity = this.shipParameters.maxVelocity * this.boost / 2;
+            this.particleSystem1.color = Ship.BoostColor;
+            this.particleSystem2.color = Ship.BoostColor;
+        }
+        else {
+            this.maxVelocity = lerp(this.maxVelocity, this.shipParameters.maxVelocity, 0.01);
+            if (this.currentCharge - deltaTime <= this.charge / 2 && !this.fullRecharge)
+                this.fullRecharge = true;
+            this.particleSystem1.color = Ship.MoveColor;
+            this.particleSystem2.color = Ship.MoveColor;
+        }
+
+        if (!this.reduceVelocity) {
+            this.#shotParticles(direction);
+        }
+
+        if (direction.x == 0 && direction.y == 0 && this.animator.state != "idle") {
             this.animator.setState("idle");
-        else if (velocity.x != 0 && velocity.y != 0 && this.animator.state != "move") {
+        }
+        else if (direction.x != 0 && direction.y != 0 && this.animator.state != "move") {
             this.animator.setState("move");
         }
     }
 
-    shotParticles(velocity) {
-        this.particleSystem1.setDirection(velocity);
-        this.particleSystem2.setDirection(velocity);
+    update(deltaTime) {
+        super.update(deltaTime);
+
+        Debug.displayText(`${this.id} charge`, this.globalPosition.new().add2(0, Math.max(this.height, this.width) + 2 + 28), "charge: " + this.currentCharge);
+        
+        this.currentChargeTimer = Math.min(this.currentChargeTimer + deltaTime, 1);
+        if (this.currentChargeTimer > 0.5 && this.currentCharge < this.charge) {
+            this.currentCharge = Math.min(this.currentCharge + this.recharge * deltaTime, this.charge);
+            if (this.currentCharge == this.charge)
+                this.fullRecharge = false;
+        }
+    }
+
+    #shotParticles(direction) {
+        this.particleSystem1.setDirection(direction);
+        this.particleSystem2.setDirection(direction);
         this.particleSystem1.shot();
         this.particleSystem2.shot();
     }
@@ -64,14 +143,13 @@ class Ship extends DamageableObject {
      */
     lookGunAt(dot) {
         let a = dot.new().remove(this.gun1.globalPosition);
-        this.gun1.angle = Math.atan2(a.y, a.x) - World.Player.angle;
+        this.gun1.angle = Math.atan2(a.y, a.x) - this.angle;
 
         let b = dot.new().remove(this.gun2.globalPosition);
-        this.gun2.angle = Math.atan2(b.y, b.x) - World.Player.angle;
+        this.gun2.angle = Math.atan2(b.y, b.x) - this.angle;
     }
 
     fire() {
-        console.log("req");
         if (!this.gun1Timer) {
             this.gun1Timer = setTimeout(() => {this.gun1Timer = 0;}, 1000 / this.fireRate);
             this.#fire(this.gun1);
@@ -88,8 +166,13 @@ class Ship extends DamageableObject {
      * @param {ChildObject} gun 
      */
     #fire(gun) {
-        new Bullet(this, gun.globalPosition.x, gun.globalPosition.y, gun.forward, 10);
-        gun.animator.setState("fire", true)
+        new Bullet(this, gun.globalPosition.x, gun.globalPosition.y, gun.forward, this.damage);
+        gun.animator.setState("fire", true);
+    }
+
+    clearDebug() {
+        super.clearDebug();
+        Debug.erase(`${this.id} charge`);
     }
 }
 
@@ -140,7 +223,9 @@ class Bullet extends DynamicObject {
 
         this.reduceVelocity = false;
 
-        this.timer = setTimeout(() => this.destroy(), 1000);
+        this.timer = setTimeout(() => this.destroy(), 2000);
+
+        this.update(0);
     }
 
     update(deltaTime) {
@@ -153,16 +238,20 @@ class Bullet extends DynamicObject {
             this.tracerLength -= deltaTime * Bullet.Speed;
         
         if (this.destroyed || length > 150)
-            this.tail.set2(this.globalPosition.new().add(localTail.multiply(this.tracerLength / length)));
+            this.tail.set2(this.globalPosition.new().add(localTail.multiply(this.tracerLength / (length ? length : 1))));
 
-        Debug.displayDot(`start ${this.id}`, this.globalPosition, "green");
-        Debug.displayDot(`end ${this.id}`, this.tail, "green");
+        Debug.displayDot(`${this.id} start`, this.globalPosition, "green");
+        Debug.displayDot(`${this.id} end`, this.tail, "green");
 
         if (this.destroyed && this.tracerLength <= 1) {
             this.destroyed = false;
             super.destroy();
             return;
         }
+    }
+
+    proximityFilter(object) {
+        return !(object instanceof Bullet);
     }
 
     /**
@@ -194,7 +283,7 @@ class Bullet extends DynamicObject {
 
         if (!isBullet && !isOwner && isDamagable) {
             clearTimeout(this.timer);
-            object.damage(this.damage, dotInfo);
+            object.dealDamage(this.damage, dotInfo);
             this.destroy();
         }
 
@@ -205,24 +294,83 @@ class Bullet extends DynamicObject {
 
     destroy() {
         this.destroyed = true;
+        //World.delete(World.DamagableObjects, this.id);
         delete World.DynamicObjects[this.id];
         this.velocity.set(0, 0);
     }
 
     clearDebug() {
         super.clearDebug();
-        Debug.erase(`start ${this.id}`);
-        Debug.erase(`end ${this.id}`);
+        Debug.erase(`${this.id} start`);
+        Debug.erase(`${this.id} end`);
     }
 }
 
 class Enemy extends Ship {
+    useBoost = false;
 
+    constructor(x, y, shipParameters) {
+        super("player", x, y, shipParameters);
+
+        World.Enemies[this.id] = this;
+    }
+
+    update(deltaTime) {
+        super.update(deltaTime);
+
+        if (!World.AI || World.Player.destroyed)
+            return;
+
+        let vectorToPlayer = World.Player.globalPosition.new().remove(this.globalPosition);
+
+        Debug.displayLine(`${this.id} vectorToPlayer`, this.globalPosition, vectorToPlayer.new().add(this.globalPosition), "red");
+
+        let tan = Math.atan2(vectorToPlayer.y, vectorToPlayer.x)
+        let angle = tan - this.angle;
+
+        if (angle < -Math.PI) angle += Math.PI * 2;
+        if (angle > Math.PI) angle -= Math.PI * 2;
+
+        let velocity = new Vector(0, 0);
+        let angleVelocity = (angle - this.angularVelocity / 10);;
+
+        if (vectorToPlayer.length() >= MIN_DISTANCE_TO_OBJECT * 6) {
+            velocity.set2(vectorToPlayer.new().normalize());
+        }
+
+        if (this.charge == this.currentCharge) {
+            this.useBoost = true
+        }
+        else if (this.currentCharge <= 0.25) {
+            this.useBoost = false;
+        }
+
+        this.input(velocity, angleVelocity, deltaTime, this.useBoost);
+        this.lookGunAt(World.Player.globalPosition);
+        if (vectorToPlayer.length() <= MIN_DISTANCE_TO_OBJECT * 12) {
+            this.fire();
+        }
+    }
+
+    destroy() {
+        super.destroy();
+        // World.delete(World.Enemies, this.id);
+        delete World.Enemies[this.id];
+    }
+
+    clearDebug() {
+        super.clearDebug();
+        Debug.erase(`${this.id} vectorToPlayer`);
+    }
 }
 
 class Player extends Ship {
-    constructor(x, y) {
-        super("player", x, y);
+    constructor(x, y, shipParameters) {
+        super("player", x, y, shipParameters);
+    }
+
+    destroy() {
+        super.destroy();
     }
 }
 
@@ -248,14 +396,16 @@ class Meteorite extends DamageableObject {
     update(deltaTime) {
         super.update(deltaTime);
 
-        let distance = World.Player.globalPosition.new(this.globalPosition).length();
+        let distance = World.Player.globalPosition.new().remove(this.globalPosition).length();
 
-        if (distance > window.innerWidth * 3 || distance > window.innerHeight * 3)
+        if (distance > GameManager.distanceFromPlayer * 2)
             this.destroy();
     }
 
     destroy() {
+        World.Meteorites[this.id] = this;
         super.destroy();
+        // World.delete(World.Meteorites, this.id);
         delete World.Meteorites[this.id];
     }
 }

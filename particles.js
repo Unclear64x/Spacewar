@@ -40,12 +40,15 @@ class ParticleSystem {
         World.ParticleSystems[this.id] = this;
     }
 
-    shot(position, direction, count = 1) {
+    shot(count = 1) {
+        let particles = Object.keys(this.particles);
+
         for (let i = 0; i < count; i++) {
-            let particles = Object.keys(this.particles);
             if (particles.length >= this.maxParticles) {
-                this.particles[particles[0]].destroy();
+                this.particles[particles[0]]?.destroy();
             }
+
+            //console.log("PARTICLE", this.object.globalPosition.x, this.object.globalPosition.y);
 
             let randomAngle = random(-this.angleRange / 2, this.angleRange / 2) + Math.atan2(-this.direction.y, -this.direction.x);
             let particle = new Particle(this, this.object.globalPosition.x, this.object.globalPosition.y, randomAngle, this.lifeTime, this.color);
@@ -60,17 +63,13 @@ class ParticleSystem {
     }
 
     update(deltaTime) {
-        if (!object) {
+        if (this.object.destroyed) {
             this.destroy();
-            return;
-        }
-
-        for (let i in this.particles) {
-            this.particles[i].update();
         }
     }
 
     destroy() {
+        // World.delete(World.ParticleSystems, this.id);
         delete World.ParticleSystems[this.id];
     }
 }
@@ -101,6 +100,8 @@ class Particle extends BaseObject {
         // this.object.append(this.img);
 
         this.system.particles[this.id] = this;
+
+        this.update(0);
     }
 
     update(deltaTime) {

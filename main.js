@@ -12,25 +12,25 @@ let cursorGlobal = new Vector(0, 0);
 addEventListeners();
 
 let lastTime = 0;
-let delta = 0;
+let deltaTime = 0;
 function update(currentTime) {
-    delta = (currentTime - lastTime) / 1000;
+    deltaTime = (currentTime - lastTime) / 1000;
     lastTime = currentTime;
 
-    playerInput(delta);
+    playerInput(deltaTime);
     //centerCameraAtPlayer();
 
     physycs();
 
     for (let i in World.Objects) {
-        World.Objects[i].update(delta);
+        World.Objects[i].update(deltaTime);
     }
 
     GameManager.update();
 
-    Debug.displayInfo("UPS", 1000 / delta);
-    Debug.displayInfo("Objects", Object.keys(World.Objects).length);
-    Debug.displayInfo("DynamicObjects", Object.keys(World.DynamicObjects).length);
+    Debug.displayInfo("main", "UPS", 1000 / deltaTime);
+    Debug.displayInfo("main", "Objects", Object.keys(World.Objects).length);
+    Debug.displayInfo("main", "DynamicObjects", Object.keys(World.DynamicObjects).length);
 
     Camera.update();
     Debug.update(Camera.ctx);
@@ -38,7 +38,10 @@ function update(currentTime) {
     requestAnimationFrame(update);
 }
 
-function playerInput(delta) {
+function playerInput(deltaTime) {
+    if (World.Player.destroyed)
+        return;
+
     forwardVelocity.set(World.Player.forward.x, World.Player.forward.y);
     rightVelocity.set(forwardVelocity.y, -forwardVelocity.x);
 
@@ -65,7 +68,9 @@ function playerInput(delta) {
         velocity.remove(rightVelocity);
     }
 
-    World.Player.input(velocity.normalize().multiply(3), angularVelocity);
+    let boost = Input.keyPressed(Button.SHIFT);
+
+    World.Player.input(velocity.normalize(), angularVelocity, deltaTime, boost);
     World.Player.lookGunAt(Input.CursorGlobal);
     if (Input.keyPressed(Button.LMB))
         World.Player.fire();
@@ -102,8 +107,31 @@ function physycs() {
 }
 
 function resize() {
-    Camera.canvas.width = window.innerWidth;
-    Camera.canvas.height = window.innerHeight;
+    let size = 1920;
+    
+    //console.log(window.devicePixelRatio);
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    let k = Math.max(width, height) / size;
+
+    if (width > height) {
+        Camera.canvas.width = size;
+        Camera.canvas.height = height / k;
+    }
+    else {
+        Camera.canvas.width = width / k;
+        Camera.canvas.height = size;
+    }
+
+    // console.log(size / width);
+    // console.log(size / height);
+    console.log(width, height, k);
+    console.log(Camera.canvas.width, Camera.canvas.height);
+    console.log();
+
+
+    //Camera.canvas.style.transform = `scale(${1 / window.devicePixelRatio})`;
 }
 
 function addEventListeners() {
@@ -117,8 +145,8 @@ function addEventListeners() {
         //World.Space = document.getElementById("space");
         //World.Space.addEventListener('dragstart', (e) => e.preventDefault());
 
-        World.Player = new Player(0, 0);
-        new Meteorite(World.Player.x + 200, World.Player.y);
+        World.Player = new Player(0, 0, new ShipParameters());
+        new Meteorite(200, 0);
 
         resize();
         update(0);

@@ -1,73 +1,147 @@
 class GameManager {
-    static spawnEnemyTimer;
-    static  spawnMeteoriteTimer;
+    static SpawnEnemyTimer;
+    static SpawnMeteoriteTimer;
 
-    static spawnEnemyTime = [];
-    static spawnMeteoriteTime = [];
+    static SpawnEnemyTime = [];
+    static SpawnMeteoriteTime = [];
+
+    static MaxMeteoritesCount = 30;
+    static MaxEnemiesCount = 2;
+
+    static DistanceFromPlayer = 2000;
+    static Range = GameManager.DistanceFromPlayer + 1000;
 
 
     static update() {
-        let meteorites = Object.keys(World.Meteorites);
-        if (meteorites.length < 10 && !GameManager.spawnMeteoriteTimer) {
-            Debug.displayInfo("spawnMeteoriteTimer");
-            let time = random(1000, 5000);
-            GameManager.spawnMeteoriteTime[0] = time;
-            GameManager.spawnMeteoriteTime[1] = Date.now();
+        if (World.Player.destroyed) 
+            return;
 
-            GameManager.spawnMeteoriteTimer = setTimeout(() => {
+        let meteorites = Object.keys(World.Meteorites);
+        let enemies = Object.keys(World.Enemies);
+
+        if (meteorites.length < GameManager.MaxMeteoritesCount && !GameManager.SpawnMeteoriteTimer) {
+            let time = random(500, 2000);
+            GameManager.SpawnMeteoriteTime[0] = time;
+            GameManager.SpawnMeteoriteTime[1] = Date.now();
+
+            GameManager.SpawnMeteoriteTimer = setTimeout(() => {
                 let position = GameManager.spawnPosition();
                 let meteorite = new Meteorite(position.x, position.y);
                 meteorite.angle = random(0, Math.PI * 2);
-                GameManager.spawnMeteoriteTimer = null;
-                GameManager.spawnMeteoriteTime[0] = 0;
-                GameManager.spawnMeteoriteTime[1] = 0;
+                GameManager.SpawnMeteoriteTimer = null;
+                GameManager.SpawnMeteoriteTime[0] = 0;
+                GameManager.SpawnMeteoriteTime[1] = 0;
             }, time);
         }
 
-        GameManager.debugSpawnTimer("meteoriteTime", GameManager.spawnMeteoriteTime);
+        if (enemies.length < GameManager.MaxEnemiesCount && !GameManager.SpawnEnemyTimer) {
+            let time = random(20000, 60000);
+            GameManager.SpawnEnemyTime[0] = time;
+            GameManager.SpawnEnemyTime[1] = Date.now();
+
+            GameManager.SpawnEnemyTimer = setTimeout(() => {
+                let position = GameManager.spawnPosition();
+                let enemy = new Enemy(position.x, position.y, new ShipParameters());
+                enemy.angle = random(0, Math.PI * 2);
+                GameManager.SpawnEnemyTimer = null;
+                GameManager.SpawnEnemyTime[0] = 0;
+                GameManager.SpawnEnemyTime[1] = 0;
+            }, time);
+        }
+
+        Debug.displayInfo("game manager", "meteorites", meteorites.length);
+        Debug.displayInfo("game manager", "enemies", enemies.length);
+        GameManager.debugSpawnTimer("SpawnMeteoriteTime", GameManager.SpawnMeteoriteTime);
+        GameManager.debugSpawnTimer("GameManager.SpawnEnemyTime", GameManager.SpawnEnemyTime);
+
+        GameManager.debugSpawnArea();
     }
 
     static debugSpawnTimer(id, data) {
         let timeRange = data[0];
         let start = data[1];
 
-        Debug.displayInfo(id, timeRange - (Date.now() - start));
+        Debug.displayInfo("game manager", id, timeRange - (Date.now() - start));
+    }
+
+    static debugSpawnArea() {
+        let playerPos = World.Player.globalPosition;
+
+        ////////////////////////////////////////////////////////////////////////////
+        Debug.displayLine("spawnArea left 1",
+            new Vector(playerPos.x - GameManager.DistanceFromPlayer, playerPos.y - GameManager.Range),
+            new Vector(playerPos.x - GameManager.DistanceFromPlayer, playerPos.y + GameManager.Range), "red"
+        );
+        Debug.displayLine("spawnArea left 2",
+            new Vector(playerPos.x - GameManager.Range, playerPos.y + GameManager.Range),
+            new Vector(playerPos.x - GameManager.Range, playerPos.y - GameManager.Range), "red"
+        );
+
+        ////////////////////////////////////////////////////////////////////////////
+        Debug.displayLine("spawnArea right 1",
+            new Vector(playerPos.x + GameManager.DistanceFromPlayer, playerPos.y + GameManager.Range),
+            new Vector(playerPos.x + GameManager.DistanceFromPlayer, playerPos.y - GameManager.Range), "red"
+        );
+
+        Debug.displayLine("spawnArea right 2",
+            new Vector(playerPos.x + GameManager.Range, playerPos.y - GameManager.Range),
+            new Vector(playerPos.x + GameManager.Range, playerPos.y + GameManager.Range), "red"
+        );
+
+        ////////////////////////////////////////////////////////////////////////////
+        Debug.displayLine("spawnArea top 1",
+            new Vector(playerPos.x - GameManager.Range, playerPos.y - GameManager.Range),
+            new Vector(playerPos.x + GameManager.Range, playerPos.y - GameManager.Range), "red"
+        );
+
+        Debug.displayLine("spawnArea top 2",
+            new Vector(playerPos.x - GameManager.Range, playerPos.y - GameManager.DistanceFromPlayer),
+            new Vector(playerPos.x + GameManager.Range, playerPos.y - GameManager.DistanceFromPlayer), "red"
+        );
+
+        ////////////////////////////////////////////////////////////////////////////
+        Debug.displayLine("spawnArea bottom 1",
+            new Vector(playerPos.x - GameManager.Range, playerPos.y + GameManager.Range),
+            new Vector(playerPos.x + GameManager.Range, playerPos.y + GameManager.Range), "red"
+        );
+
+        Debug.displayLine("spawnArea bottom 2",
+            new Vector(playerPos.x - GameManager.Range, playerPos.y + GameManager.DistanceFromPlayer),
+            new Vector(playerPos.x + GameManager.Range, playerPos.y + GameManager.DistanceFromPlayer), "red"
+        );
     }
 
     static spawnPosition() {
         let side = randomInt(0, 3);
-        let distanceFromPlayer = Math.min(window.innerHeight * 2, window.innerWidth * 2);
-        let range = distanceFromPlayer + 200;;
-
         let position = new Vector(0, 0);
 
         let playerPos = World.Player.globalPosition;
         switch (side) {
             case 0: // слева
                 position.set(
-                    random(playerPos.x - range, -distanceFromPlayer),
-                    random(playerPos.y - range, playerPos.y + range)
+                    random(playerPos.x - GameManager.Range, playerPos.x - GameManager.DistanceFromPlayer),
+                    random(playerPos.y - GameManager.Range, playerPos.y + GameManager.Range)
                 )
                 break;
             
             case 1: // справа
                 position.set(
-                    random(distanceFromPlayer, playerPos.x + range),
-                    random(playerPos.y - range, playerPos.y + range)
+                    random(playerPos.x + GameManager.DistanceFromPlayer, playerPos.x + GameManager.Range),
+                    random(playerPos.y - GameManager.Range, playerPos.y + GameManager.Range)
                 )
                 break;
             
             case 2: // сверху
                 position.set(
-                    random(playerPos.x - range, playerPos.x + range),
-                    random(playerPos.y - range, -distanceFromPlayer)
+                    random(playerPos.x - GameManager.Range, playerPos.x + GameManager.Range),
+                    random(playerPos.y - GameManager.Range, playerPos.y - GameManager.DistanceFromPlayer)
                 )
                 break;
             
             case 3: // снизу
                 position.set(
-                    random(playerPos.x - range, playerPos.x + range),
-                    random(distanceFromPlayer, playerPos.y + range)
+                    random(playerPos.x - GameManager.Range, playerPos.x + GameManager.Range),
+                    random(playerPos.y + GameManager.DistanceFromPlayer, playerPos.y + GameManager.Range)
                 )
                 break;
         }
@@ -82,7 +156,7 @@ class GameManager {
                     continue;
 
                 if (position.new().remove(object.globalPosition).length() < MIN_DISTANCE_TO_OBJECT * 2) {
-                    position.add(playerPos.new().remove(position).normalize().multiply(MIN_DISTANCE_TO_OBJECT * 2));
+                    position.remove(playerPos.new().remove(position).normalize().multiply(MIN_DISTANCE_TO_OBJECT * 2));
                     positionCorrect = false;
                     break;
                 }

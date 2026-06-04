@@ -4,6 +4,10 @@ class Debug {
     static #data = {};
     static #infoData = {};
 
+    static isEnabled() {
+        return Debug.#enabled;
+    }
+
     static clear() {
         for (let i in Debug.#data) {
             // Debug.#data[i].remove();
@@ -113,34 +117,56 @@ class Debug {
 
     /**
      * 
+     * @param {String} group
      * @param {String} id 
      * @param {String} value 
      */
-    static displayInfo(id, value) {
+    static displayInfo(group, id, value) {
         if (!Debug.#enabled)
             return;
+
+        if (!group)
+            group = "other";
         
-        Debug.#infoData[id] = value;
+        if (!Debug.#infoData[group])
+            Debug.#infoData[group] = {};
+
+        Debug.#infoData[group][id] = value;
     }
 
     static update() {
         let ctx = Camera.ctx;
 
-        let y = 0;
+        let y = 10;
+        let x = 10;
+
         for (let i in Debug.#infoData) {
-            ctx.save();
-            ctx.translate(20, y);
-            ctx.font = "bold 12px consolas";
-            ctx.textBaseline = "top";
-            ctx.fillStyle = "lime";
-            ctx.fillText(`${i}: ${Debug.#infoData[i]}`, 0, 0);
-            ctx.restore();
-            y += 14;
+            Debug.#drawInfo(ctx, x, y, 14, i.toUpperCase());
+            y += 16;
+            x += 10;
+
+            for (let b in Debug.#infoData[i]) {
+                Debug.#drawInfo(ctx, x, y, 12, `${b}: ${Debug.#infoData[i][b]}`);
+                y += 14;
+            }
+
+            y += 5;
+            x -= 10;
         }
 
         for (let i in Debug.#data) {
             Debug.#draw(ctx, Debug.#data[i]);
         }
+    }
+
+    static #drawInfo(ctx, x, y, fontSize, text) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.font = `bold ${fontSize}px consolas`;
+        ctx.textBaseline = "top";
+        ctx.fillStyle = "lime";
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
     }
 
     /**

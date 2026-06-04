@@ -38,7 +38,9 @@ class Input {
      * @param {MouseEvent} move 
      */
     static mouseMove(move) {
-        Input.Cursor.set(move.clientX - (window.innerWidth / 2), move.clientY - (window.innerHeight / 2));
+        let widthK = window.innerWidth / Camera.canvas.width;
+        let heightK = window.innerHeight / Camera.canvas.height;
+        Input.Cursor.set((move.clientX - (window.innerWidth / 2)) / widthK, (move.clientY - (window.innerHeight / 2)) / heightK);
     }
 
     static init() {
@@ -63,4 +65,5 @@ class Button {
     static S = "KeyS";
     static D = "KeyD";
     static SPACE = "Space";
+    static SHIFT = "ShiftLeft";
 }

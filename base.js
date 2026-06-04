@@ -128,6 +128,9 @@ class Vector {
     x = 0;
     y = 0;
 
+    #length = 0;
+    #calculatedLength = false;
+
     static ZERO = new Vector(0, 0);
 
     constructor(x = 0, y = 0) {
@@ -144,6 +147,7 @@ class Vector {
             this.x /= len;
             this.y /= len;
         }
+        this.#length = 1;
         return this;
     }
 
@@ -151,10 +155,19 @@ class Vector {
      * Возвращает длину вектора
      */
     length() {
-        if (this.x == 0 && this.y == 0)
-            return 0;
+        if (this.#calculatedLength)
+            return this.#length;
 
-        return (this.x ** 2 + this.y ** 2) ** 0.5;
+        this.#calculatedLength = true;
+        
+        if (this.x == 0 && this.y == 0) {
+            this.#length = 0
+        }
+        else {
+            this.#length = (this.x ** 2 + this.y ** 2) ** 0.5;
+        }
+
+        return this.#length;
     }
 
     /**
@@ -193,6 +206,7 @@ class Vector {
      * @param {Number} y 
      */
     set(x, y) {
+        this.#calculatedLength = this.#calculatedLength && this.x == x && this.y == y;
         this.x = x;
         this.y = y;
         return this;
@@ -203,8 +217,11 @@ class Vector {
      * @param {Vector} vector 
      */
     set2(vector) {
+        let x = this.x;
+        let y = this.y;
         this.x = vector.x;
         this.y = vector.y;
+        this.#calculatedLength = this.#calculatedLength && this.x == x && this.y == y;
         return this;
     }
 
@@ -213,6 +230,7 @@ class Vector {
      * @param {Vector} vector 
      */
     add(vector) {
+        this.#calculatedLength = this.#calculatedLength && vector.x == 0 && vector.y == 0;
         this.x += vector.x;
         this.y += vector.y;
         return this;
@@ -223,6 +241,7 @@ class Vector {
      * @param {Vector} vector 
      */
     remove(vector) {
+        this.#calculatedLength = this.#calculatedLength && vector.x == 0 && vector.y == 0;
         this.x -= vector.x;
         this.y -= vector.y;
         return this;
@@ -234,6 +253,7 @@ class Vector {
      * @param {Number} y 
      */
     add2(x, y) {
+        this.#calculatedLength = this.#calculatedLength && x == 0 && y == 0;
         this.x += x;
         this.y += y;
         return this;
@@ -245,8 +265,9 @@ class Vector {
      * @param {Number} y 
      */
     remove2(x, y) {
-        this.x += x;
-        this.y += y;
+        this.#calculatedLength = this.#calculatedLength && x == 0 && y == 0;
+        this.x -= x;
+        this.y -= y;
         return this;
     }
 
@@ -255,6 +276,7 @@ class Vector {
      * @param {Number} number 
      */
     multiply(number) {
+        this.#calculatedLength = this.#calculatedLength && number == 1;
         this.x *= number;
         this.y *= number;
         return this;
@@ -266,6 +288,7 @@ class Vector {
      * @param {Number} numberY 
      */
     multiply2(numberX, numberY) {
+        this.#calculatedLength = this.#calculatedLength && numberX == 1 && numberY == 1;
         this.x *= numberX;
         this.y *= numberY;
         return this;
@@ -283,7 +306,9 @@ class Vector {
 
         this.x = x * cos - this.y * sin;
         this.y = x * sin + this.y * cos;
-        
+
+        this.#calculatedLength = false;
+
         return this;
     }
 
@@ -305,6 +330,7 @@ class Vector {
     lerp(to, k) {
         this.x = lerp(this.x, to.x, k);
         this.y = lerp(this.y, to.y, k);
+        this.#calculatedLength = false;
         return this;
     }
 
@@ -313,5 +339,45 @@ class Vector {
      */
     new() {
         return new Vector(this.x, this.y);
+    }
+
+    toString() {
+        return `[${this.x}, ${this.y}]`;
+    }
+}
+
+class ShipParameters {
+    /** макс. ускорение */
+    maxVelocity = 300;
+    /**ускорение */
+    tickVelocity = 3;
+
+    /**грубо говоря спринт */
+    boost = 3;
+    /**заряд спринта (от 0 с шагом в deltaTime, по сути в секундах) */
+    charge = 1;
+    /**скорость восстановления заряда в секунду */
+    recharge = 0.2;
+
+    /**урон от 10 до 25 */
+    damage = 10;
+    /**скорострельность от 0.25 до 2 */
+    fireRate = 1;
+
+    /**здоровье */
+    health = 100;
+
+    constructor(maxVelocity = 300, velocity = 3, boost = 3, charge = 1, recharge = 0.2, damage = 10, fireRate = 1, health = 100) {
+        this.maxVelocity = maxVelocity;
+        this.velocity = velocity;
+
+        this.boost = boost;
+        this.charge = charge;
+        this.recharge = recharge;
+
+        this.damage = damage;
+        this.fireRate = fireRate;
+
+        this.health = health;
     }
 }

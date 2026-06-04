@@ -7,8 +7,6 @@ class World {
 
     static Objects = {};
 
-    static VisualObjects = {};
-
     static DynamicObjects = {};
 
     static DamagableObjects = {};
@@ -18,4 +16,22 @@ class World {
     static Enemies = {};
 
     static Meteorites = {};
+
+    static AI = true;
+
+    static update(what, detlaTime) {
+        for (let i in what) {
+            i.update(detlaTime);
+        }
+    }
+
+    static clear() {
+        for (let i in World.Objects) {
+            i.destroy();
+        }
+        
+        for (let i in World.ParticleSystems) {
+            i.destroy();
+        }
+    }
 }
