@@ -8,6 +8,8 @@ class Debug {
         return Debug.#enabled;
     }
 
+    static fontSize = 16;
+
     static clear() {
         for (let i in Debug.#data) {
             // Debug.#data[i].remove();
@@ -141,16 +143,16 @@ class Debug {
         let x = 10;
 
         for (let i in Debug.#infoData) {
-            Debug.#drawInfo(ctx, x, y, 14, i.toUpperCase());
-            y += 16;
+            Debug.#drawInfo(ctx, x, y, Debug.fontSize + 2, i.toUpperCase());
+            y += Debug.fontSize + 4;
             x += 10;
 
             for (let b in Debug.#infoData[i]) {
-                Debug.#drawInfo(ctx, x, y, 12, `${b}: ${Debug.#infoData[i][b]}`);
-                y += 14;
+                Debug.#drawInfo(ctx, x, y, Debug.fontSize, `${b}: ${Debug.#infoData[i][b]}`);
+                y += Debug.fontSize + 2;
             }
 
-            y += 5;
+            y += 10;
             x -= 10;
         }
 
@@ -183,7 +185,7 @@ class Debug {
         switch (object.type) {
             case "text":
                 ctx.translate(object.x + x, object.y + y);
-                ctx.font = "bold 12px consolas";
+                ctx.font = `bold ${Debug.fontSize}px consolas`;
                 ctx.fillStyle = "lime";
                 ctx.textAlign = "center";
                 ctx.fillText(object.value, 0, 0);
@@ -221,10 +223,10 @@ class Debug {
 
         Debug.#setVisible(localStorage.getItem("Debug") == "true");
 
-        window.addEventListener("mousedown", (e) => {
-            if (Input.keyPressed(Button.MMB)) {
-                Debug.switchVisible();
-            }
-        });
+        // window.addEventListener("mousedown", (e) => {
+        //     if (Input.keyPressed(Button.MMB)) {
+        //         Debug.switchVisible();
+        //     }
+        // });
     }
 }

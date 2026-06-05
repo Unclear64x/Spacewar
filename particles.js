@@ -8,7 +8,7 @@ class ParticleSystem {
     angleRange = 0;
     
     maxParticles = 50;
-    randomizeSpeed = false;
+    randomSpeed = false;
     speed = 100;
 
     static #totalId;
@@ -19,6 +19,7 @@ class ParticleSystem {
 
     color;
 
+    randomLifeTime = false;
     lifeTime;
 
     /**
@@ -51,9 +52,10 @@ class ParticleSystem {
             //console.log("PARTICLE", this.object.globalPosition.x, this.object.globalPosition.y);
 
             let randomAngle = random(-this.angleRange / 2, this.angleRange / 2) + Math.atan2(-this.direction.y, -this.direction.x);
-            let particle = new Particle(this, this.object.globalPosition.x, this.object.globalPosition.y, randomAngle, this.lifeTime, this.color);
+            let lifeTime = this.randomLifeTime ? random(this.lifeTime / 2, this.lifeTime) : this.lifeTime;
+            let particle = new Particle(this, this.object.globalPosition.x, this.object.globalPosition.y, randomAngle, lifeTime, this.color);
 
-            particle.speed = this.speed * (this.randomizeSpeed ? random(0.3, 1) : 1);
+            particle.speed = this.speed * (this.randomSpeed ? random(0.3, 1) : 1);
         }
     }
 

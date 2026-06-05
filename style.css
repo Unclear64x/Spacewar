@@ -7,6 +7,79 @@ body {
     margin: 0;
 
     user-select: none;
+    position: relative;
+}
+
+.infoDot {
+    position: absolute;
+    transform-origin: center center;
+    display: flex;
+
+    transition: transform 0.1s ease;
+}
+
+.infoContainer {
+    display: flex;
+    position: relative;
+
+    flex-direction: column;
+    width: 10vmax;
+    transform: translate(-50%, -3.5vmax);
+
+    align-items: center;
+    justify-content: center;
+}
+
+.squareInfo {
+    border: solid 0.1vmax var(--progress-bar-background);
+
+    width: 7vmax;
+    height: 7vmax;
+
+    opacity: 0.5;
+}
+
+.textInfo {
+    color: var(--progress-bar-background);
+    margin: 0;
+    opacity: 0.8;
+    width: 10vmax;
+    font-family: "consolas";
+
+    font-size: 1vmax;
+
+    gap: 1vmax;
+    display: flex;
+    align-items: center;
+}
+
+@property --progress-background {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: green;
+}
+@property --progress-bar-background {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: lime;
+}
+
+.progressInfo {
+    background-color: var(--progress-background);;
+    width: 100%;
+    height: 50%;
+
+    transition: value 0.3ms ease;
+
+    border: none;
+    appearance: none;
+    /* -moz-appearance: none;
+    -webkit-appearance: none; */
+}
+
+.progressInfo::-moz-progress-bar {
+    background-color: var(--progress-bar-background);
+    border: none;
 }
 
 .playerStats {

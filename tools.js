@@ -134,6 +134,39 @@ function randomInt(from, to) {
     return Math.floor((to - from + 1) * Math.random()) + from;
 }
 
-function DegToRad(deg) {
+function degToRad(deg) {
     return deg * Math.PI / 180;
+}
+
+/**
+ * 
+ * @param {Vector} globalPosition 
+ */
+function globalToScreenPosition(globalPosition) {
+    let canvasWidth = Camera.canvas.width / 2//window.innerWidth * (window.innerWidth / Camera.canvas.width) / 2; // Camera.canvas.width//
+    let canvasHeight = Camera.canvas.height / 2//window.innerHeight * (window.innerHeight / Camera.canvas.height) / 2; // Camera.canvas.height//
+
+    let windowWidth = window.innerWidth / 2;
+    let windowHeight = window.innerHeight / 2;
+
+    let k = Math.max(window.innerWidth, window.innerHeight) / 1440;
+    //console.log(k);
+
+    return globalPosition.new().add(Camera.position).remove2(canvasWidth, canvasHeight).multiply(k).remove2(-windowWidth, windowHeight);
+}
+
+/**
+ * 
+ * @param {Array<String>} path 
+ */
+function getValueByPath(object, path) {
+    if (!path)
+        return;
+
+    let value = object[path[0]];
+    for (let i = 1; i < path.length; i++) {
+        value = value[path[i]];
+    }
+    
+    return value;
 }

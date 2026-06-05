@@ -17,6 +17,8 @@ function update(currentTime) {
     deltaTime = (currentTime - lastTime) / 1000;
     lastTime = currentTime;
 
+    input();
+
     playerInput(deltaTime);
     //centerCameraAtPlayer();
 
@@ -76,6 +78,12 @@ function playerInput(deltaTime) {
         World.Player.fire();
 }
 
+function input() {
+    if (Input.keyJustPressed(Button.Backquote, "debug")) {
+        Debug.switchVisible();
+    }
+}
+
 function centerCameraAtPlayer() {
     let cameraX = window.innerWidth / 2 - World.Player.x;
     let cameraY = window.innerHeight / 2 - World.Player.y;
@@ -107,7 +115,7 @@ function physycs() {
 }
 
 function resize() {
-    let size = 1920;
+    let size = 1440;
     
     //console.log(window.devicePixelRatio);
     let width = window.innerWidth;

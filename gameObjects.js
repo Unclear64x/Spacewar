@@ -20,8 +20,6 @@ class Ship extends DamageableObject {
     boost = 3;
     charge = 1;
     recharge = 0.2;
-    currentCharge = 0;
-    currentChargeTimer = 0;
     
     damage = 10;
     fireRate = 2;
@@ -74,7 +72,7 @@ class Ship extends DamageableObject {
         this.gun2 = this.addChild("gun2", gunAnimation, "idle", 0, -32, 30, 10);
 
         let lifeTime = 0.2;
-        let angle = DegToRad(50);
+        let angle = degToRad(50);
         this.particleSystem1 = new ParticleSystem(this.addChild(null, null, null, -35, 10), Vector.ZERO, lifeTime, angle, Ship.MoveColor);
         this.particleSystem2 = new ParticleSystem(this.addChild(null, null, null, -35, -10), Vector.ZERO, lifeTime, angle, Ship.MoveColor);
 
@@ -82,24 +80,25 @@ class Ship extends DamageableObject {
     }
 
     input(direction, angularVelocity, deltaTime, boost = false) {
-        boost = this.currentCharge > 0 && boost && !this.fullRecharge;
+        boost = this.charge > 0 && boost && !this.fullRecharge;
         
         let velocity = this.tickVelocity + boost? this.boost : 0;
         this.addVelocity(direction.new().multiply(velocity), angularVelocity);
 
-        this.particleSystem1.speed = velocity / 3 * 100;
+        this.particleSystem1.speed = this.velocity.length() / 10 + velocity / 3 * 100;
         this.particleSystem2.speed = this.particleSystem1.speed;
 
         if (boost && (direction.x || direction.y)) {
-            this.currentChargeTimer = 0;
-            this.currentCharge = Math.max(0, this.currentCharge - deltaTime);
+            this.chargeTimer = 0;
+            this.charge = Math.max(0, this.charge - deltaTime);
             this.maxVelocity = this.shipParameters.maxVelocity * this.boost / 2;
             this.particleSystem1.color = Ship.BoostColor;
             this.particleSystem2.color = Ship.BoostColor;
+            
         }
         else {
             this.maxVelocity = lerp(this.maxVelocity, this.shipParameters.maxVelocity, 0.01);
-            if (this.currentCharge - deltaTime <= this.charge / 2 && !this.fullRecharge)
+            if (this.charge - deltaTime <= this.shipParameters.charge / 2 && !this.fullRecharge)
                 this.fullRecharge = true;
             this.particleSystem1.color = Ship.MoveColor;
             this.particleSystem2.color = Ship.MoveColor;
@@ -120,21 +119,21 @@ class Ship extends DamageableObject {
     update(deltaTime) {
         super.update(deltaTime);
 
-        Debug.displayText(`${this.id} charge`, this.globalPosition.new().add2(0, Math.max(this.height, this.width) + 2 + 28), "charge: " + this.currentCharge);
+        Debug.displayText(`${this.id} charge`, this.globalPosition.new().add2(0, Math.max(this.height, this.width) + 2 + 28), "charge: " + this.charge);
         
-        this.currentChargeTimer = Math.min(this.currentChargeTimer + deltaTime, 1);
-        if (this.currentChargeTimer > 0.5 && this.currentCharge < this.charge) {
-            this.currentCharge = Math.min(this.currentCharge + this.recharge * deltaTime, this.charge);
-            if (this.currentCharge == this.charge)
-                this.fullRecharge = false;
+        this.chargeTimer = Math.min(this.chargeTimer + deltaTime, 1);
+        if (this.chargeTimer > 0.5 && this.charge < this.shipParameters.charge) {
+            this.charge = Math.min(this.charge + this.recharge * deltaTime, this.shipParameters.charge);
         }
+        if (this.charge == this.shipParameters.charge)
+            this.fullRecharge = false;
     }
 
     #shotParticles(direction) {
         this.particleSystem1.setDirection(direction);
         this.particleSystem2.setDirection(direction);
-        this.particleSystem1.shot();
-        this.particleSystem2.shot();
+        this.particleSystem1.shot(5);
+        this.particleSystem2.shot(5);
     }
 
     /**
@@ -313,6 +312,17 @@ class Enemy extends Ship {
         super("player", x, y, shipParameters);
 
         World.Enemies[this.id] = this;
+
+        let data = {
+            "Состояние": {
+                "type": "progress",
+                "object": this,
+                "valueName": ["health"],
+                "maxValueName": ["shipParameters", "health"]
+            },
+        }
+        
+        this.data = new GameObjectData(this.globalPosition, data);
     }
 
     update(deltaTime) {
@@ -338,10 +348,10 @@ class Enemy extends Ship {
             velocity.set2(vectorToPlayer.new().normalize());
         }
 
-        if (this.charge == this.currentCharge) {
+        if (this.shipParameters.charge == this.charge) {
             this.useBoost = true
         }
-        else if (this.currentCharge <= 0.25) {
+        else if (this.charge <= 0.25) {
             this.useBoost = false;
         }
 
@@ -367,6 +377,24 @@ class Enemy extends Ship {
 class Player extends Ship {
     constructor(x, y, shipParameters) {
         super("player", x, y, shipParameters);
+
+        let data = {
+            "Состояние": {
+                "type": "progress",
+                "object": this,
+                "valueName": ["health"],
+                "maxValueName": ["shipParameters", "health"]
+            },
+            "Заряд": {
+                "type": "progress",
+                "object": this,
+                "valueName": ["charge"],
+                "maxValueName": ["shipParameters", "charge"]
+            },
+        }
+        
+        this.data = new GameObjectData(this.globalPosition, data);
+        this.data.scanTime = 0.5;
     }
 
     destroy() {
@@ -375,6 +403,8 @@ class Player extends Ship {
 }
 
 class Meteorite extends DamageableObject {
+    maxHealth = 100;
+
     constructor(x, y, material) {
         let collider = [
             new Vector(-0.15625, -0.5),
@@ -391,6 +421,17 @@ class Meteorite extends DamageableObject {
         this.damageParticleSystem.color = [128, 128, 128];
 
         World.Meteorites[this.id] = this;
+
+        let data = {
+            "Состояние": {
+                "type": "progress",
+                "object": this,
+                "valueName": ["health"],
+                "maxValueName": ["maxHealth"]
+            },
+        }
+        
+        this.data = new GameObjectData(this.globalPosition, data);
     }
 
     update(deltaTime) {

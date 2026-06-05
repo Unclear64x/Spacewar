@@ -1,9 +1,6 @@
 class Camera {
     /**@type {Vector} */
     static focus = new Vector(0, 0);
-    
-    /**@type {Vector} */
-    static dotOfInterest = new Vector(0, 0);
 
     /**@type {Vector} */
     static position = new Vector(0, 0);
@@ -30,7 +27,7 @@ class Camera {
 
         Camera.focus.set2(Input.Cursor);
         
-        const debugZoom = Debug.isEnabled() ? 5 : 1
+        const debugZoom = Debug.isEnabled() ? 7 : 1
         const x = Camera.canvas.width / 2 - World.Player.x - Camera.focus.x * debugZoom;
         const y = Camera.canvas.height / 2 - World.Player.y - Camera.focus.y * debugZoom;
 

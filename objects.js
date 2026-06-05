@@ -20,7 +20,7 @@ class BaseObject {
     img = {"src": null};
 
     /**@type {ObjectData} */
-    objectData = null;
+    data = null;
 
     width = 0;
     height = 0;
@@ -113,7 +113,7 @@ class BaseObject {
         return child;
     }
 
-    update() {
+    update(deltaTime) {
         this.updateGlobalPosition();
         this.updateGlobalRotation();
         this.forward.set(Math.cos(this.globalRotation), Math.sin(this.globalRotation));
@@ -128,7 +128,7 @@ class BaseObject {
             this.children[i].update();
         }
 
-        this.objectData?.update(this);
+        this.data?.update(deltaTime);
     }
 
     updateGlobalPosition() {
@@ -157,6 +157,13 @@ class BaseObject {
         // World.delete(World.Objects, this.id);
         delete World.Objects[this.id];
         this.clearDebug();
+
+        if (this.data) {
+            this.data.update(0);
+            setTimeout(() => {
+                this.data?.remove();
+            }, 500);
+        }
     }
 }
 
@@ -367,7 +374,7 @@ class DynamicObject extends BaseObject {
 
         Debug.displayLine(`${this.id} velocity`, this.globalPosition, this.globalPosition.new().add(this.velocity), "white")
         
-        super.update();
+        super.update(deltaTime);
 
         if (this.reduceVelocity)
             this.velocity.lerp(Vector.ZERO, 0.05);
@@ -412,9 +419,11 @@ class DamageableObject extends DynamicObject {
     defaultConstructor(uniqueId, animatorParams, startState, x, y) {
         super.defaultConstructor(uniqueId, animatorParams, startState, x, y);
 
-        this.damageParticleSystem = new ParticleSystem(this.addChild(null, null, null), Vector.ZERO, 1, DegToRad(90));
+        this.damageParticleSystem = new ParticleSystem(this.addChild(null, null, null), Vector.ZERO, 1, degToRad(90));
         this.damageParticleSystem.speed = 200;
-        this.damageParticleSystem.randomizeSpeed = true;
+        this.damageParticleSystem.randomSpeed = true;
+        this.damageParticleSystem.randomLifeTime = true;
+        this.damageParticleSystem.maxParticles = 100;
 
         World.DamagableObjects[this.id] = this;
     }
@@ -457,13 +466,13 @@ class DamageableObject extends DynamicObject {
         this.damageParticleSystem.object.updateGlobalPosition();
 
         this.damageParticleSystem.setDirection(n1.multiply(-1));
-        this.damageParticleSystem.shot(10);
+        this.damageParticleSystem.shot(20);
     }
 
     update(deltaTime) {
         super.update(deltaTime);
 
-        Debug.displayText(`${this.id} health`, this.globalPosition.new().add2(0, Math.max(this.height, this.width) + 2 + 14), "health: " + this.health);
+        Debug.displayText(`${this.id} health`, this.globalPosition.new().add2(0, Math.max(this.height, this.width) + Debug.fontSize + 4), "health: " + this.health);
     }
 
     destroy() {
