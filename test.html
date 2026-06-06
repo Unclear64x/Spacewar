@@ -4,9 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/user_interface.css">
+    <link rel="stylesheet" href="css/general.css">
 </head>
 <body>
-    <p class="textInfo"><img style="height: 100%;" src="sprites/materials/metal.png"> 5555</p>
+    <div class="upgrade-container">
+        <div id="parameters" class="list-container">
+
+            <div class="parameter-card text-style">
+                <span>Характеристика</span>
+                <progress value="0.1"></progress>
+            </div>
+
+        </div>
+
+        <div id="upgrades" class="list-container">
+
+            <div class="upgrade-card text-style">
+
+                <button class="buy-button"></button>
+                <div class="upgrade">
+                    <span>Урон</span>
+                    <div class="upgrade-resources">
+                        <div class="upgrade-resource">
+                            <img src="sprites/materials/aneit.png" alt="aneit">
+                            <span>80</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
 </body>
 </html>

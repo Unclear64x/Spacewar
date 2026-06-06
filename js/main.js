@@ -134,7 +134,7 @@ function resize() {
 
     // console.log(size / width);
     // console.log(size / height);
-    console.log(width, height, k);
+    console.log(width, height, k, window.devicePixelRatio);
     console.log(Camera.canvas.width, Camera.canvas.height);
     console.log();
 

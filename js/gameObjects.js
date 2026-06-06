@@ -433,6 +433,9 @@ class Player extends Ship {
 class Meteorite extends DamageableObject {
     maxHealth = 100;
 
+    renderMaterial;
+    material = {"name": "", "count": 0};
+
     constructor(x, y, material) {
         let collider = [
             new Vector(-0.15625, -0.5),

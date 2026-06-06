@@ -138,7 +138,7 @@ class GameObjectData extends ObjectData {
         let second;
         switch (data["type"]) {
             case "progress":
-                first = document.createElement("label");
+                first = document.createElement("span");
                 first.innerText = title;
 
                 second = document.createElement("progress");
@@ -146,10 +146,10 @@ class GameObjectData extends ObjectData {
                 break;
 
             case "text":
-                first = document.createElement("label");
+                first = document.createElement("span");
                 first.innerText = title;
 
-                second = document.createElement("label");
+                second = document.createElement("span");
                 break;
 
             case "icon":
@@ -157,7 +157,7 @@ class GameObjectData extends ObjectData {
                 first.setAttribute("class", "iconInfo");
                 first.src = data["icon"];
 
-                second = document.createElement("label");
+                second = document.createElement("span");
         }
 
         // info.setAttribute("class", "info");
