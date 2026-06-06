@@ -147,6 +147,7 @@ function addEventListeners() {
         Input.init();
         Debug.init();
         Camera.init();
+        World.ObjectDatas = document.getElementById("objectDatas");
 
         window.addEventListener("resize", resize);
 

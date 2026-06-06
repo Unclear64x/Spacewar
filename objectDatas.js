@@ -10,7 +10,9 @@ class GameObjectData extends ObjectData {
     data;
     info;
     /**@type {HTMLElement} */
-    container;
+    container1;
+    /**@type {HTMLElement} */
+    container2;
 
     visible = false;
     scan = 0;
@@ -80,6 +82,9 @@ class GameObjectData extends ObjectData {
             }
         }
 
+        if (!this.visible)
+            return;
+
         for (let i in this.createdInfo) {
             this.updateInfo(i);
         }
@@ -100,40 +105,74 @@ class GameObjectData extends ObjectData {
 
         this.data.style.visibility = "collapse";
 
-        this.container = document.createElement("div");
-        this.container.setAttribute("class", "infoContainer");
+        let info = document.createElement("div");
+        info.setAttribute("class", "info");
+
+        let row = document.createElement("div");
+        row.setAttribute("class", "infoRow");
+
+        let column = document.createElement("div");
+        column.setAttribute("class", "infoColumn");
+
+        this.container1 = document.createElement("div");
+        this.container1.setAttribute("class", "infoContainer vertivalMargin");
+
+        this.container2 = document.createElement("div");
+        this.container2.setAttribute("class", "infoContainer horizontalMargin");
+        this.container2.style.alignSelf = "start";
+        this.container2.style.transform = "none";
 
         let square = document.createElement("div");
         square.setAttribute("class", "squareInfo");
         
-        this.container.append(square);
-        this.data.append(this.container);
-        document.body.append(this.data);
+        column.append(this.container1);
+        row.append(square, this.container2);
+        info.append(row, column);
+        this.data.append(info);
+        World.ObjectDatas.append(this.data);
     }
 
     addInfo(title, data) {
-        let info;
+        // let info = document.createElement("div");
+        let first;
+        let second;
         switch (data["type"]) {
             case "progress":
-                info = document.createElement("label");
-                info.setAttribute("class", "textInfo");
-                info.innerText = title;
+                first = document.createElement("label");
+                first.innerText = title;
 
-                let value = document.createElement("progress");
-                value.setAttribute("class", "progressInfo");
-
-                data["value"] = value;
-
-                info.append(value);
+                second = document.createElement("progress");
+                second.setAttribute("class", "progressInfo");
                 break;
-            
+
             case "text":
-                info = document.createElement("p");
-                info.setAttribute("class", "textInfo");
+                first = document.createElement("label");
+                first.innerText = title;
+
+                second = document.createElement("label");
                 break;
+
+            case "icon":
+                first = document.createElement("img");
+                first.setAttribute("class", "iconInfo");
+                first.src = data["icon"];
+
+                second = document.createElement("label");
         }
-        data["info"] = info;
-                this.container.append(info);
+
+        // info.setAttribute("class", "info");
+        // info.append(first, second);
+
+        // data["info"] = info;
+        data["first"] = first;
+        data["second"] = second;
+
+        let container = data["container"] ?? 1;
+
+        if (container == 1)
+            this.container1.append(first, second);
+        else
+            this.container2.append(first, second);
 
         if (data["object"] instanceof Enemy) {
             this.data.style.setProperty("--progress-background", "#900");
@@ -146,26 +185,27 @@ class GameObjectData extends ObjectData {
     }
 
     removeInfo(title) {
-        this.createdInfo[title]["info"].remove();
+        this.createdInfo[title]["first"].remove();
+        this.createdInfo[title]["second"].remove();
         delete this.createdInfo[title];
     }
 
     updateInfo(title) {
-        let info = this.createdInfo[title]["info"];
-        let progress = this.createdInfo[title]["value"];
+        let first = this.createdInfo[title]["first"];
+        let second = this.createdInfo[title]["second"];
         let object = this.createdInfo[title]["object"];
-        let value = getValueByPath(object, this.createdInfo[title]["valueName"]);
-        let maxValue = getValueByPath(object, this.createdInfo[title]["maxValueName"]); //object[this.createdInfo[title]["maxValueName"]];
+        let objectValue = getValueByPath(object, this.createdInfo[title]["valueName"]);
+        let objectMaxValue = getValueByPath(object, this.createdInfo[title]["maxValueName"]); //object[this.createdInfo[title]["maxValueName"]];
 
         // console.log(this.createdInfo[title]["valueName"], value, object["charge"]);
 
         switch (this.createdInfo[title]["type"]) {
             case "progress":
-                progress.value = value / maxValue;
+                second.value = objectValue / objectMaxValue;
                 break;
-            
-            case "text":
-                info.innerText = `${title}: ${value}`;
+
+            default: // для text и icon
+                second.innerText = objectValue;
                 break;
         }
     }

@@ -391,6 +391,34 @@ class Player extends Ship {
                 "valueName": ["charge"],
                 "maxValueName": ["shipParameters", "charge"]
             },
+            "Метал": {
+                "container": 2,
+                "type": "icon",
+                "icon": materials["metal"].src,
+                "object": Inventory,
+                "valueName": ["Metal"]
+            },
+            "Ирит": {
+                "container": 2,
+                "type": "icon",
+                "icon": materials["irit"].src,
+                "object": Inventory,
+                "valueName": ["Irit"]
+            },
+            "Борит": {
+                "container": 2,
+                "type": "icon",
+                "icon": materials["borit"].src,
+                "object": Inventory,
+                "valueName": ["Borit"]
+            },
+            "Анеит": {
+                "container": 2,
+                "type": "icon",
+                "icon": materials["aneit"].src,
+                "object": Inventory,
+                "valueName": ["Aneit"]
+            },
         }
         
         this.data = new GameObjectData(this.globalPosition, data);
@@ -416,8 +444,6 @@ class Meteorite extends DamageableObject {
 
         super(collider, null, meteoriteAnimation, "none", x, y, 1000);
 
-        this.health = 10000;
-
         this.damageParticleSystem.color = [128, 128, 128];
 
         World.Meteorites[this.id] = this;
@@ -439,7 +465,7 @@ class Meteorite extends DamageableObject {
 
         let distance = World.Player.globalPosition.new().remove(this.globalPosition).length();
 
-        if (distance > GameManager.distanceFromPlayer * 2)
+        if (distance > GameManager.DistanceFromPlayer * 2)
             this.destroy();
     }
 

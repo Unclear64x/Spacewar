@@ -17,6 +17,8 @@ class World {
 
     static Meteorites = {};
 
+    static ObjectDatas;
+
     static AI = true;
 
     static update(what, detlaTime) {

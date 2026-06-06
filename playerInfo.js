@@ -29,3 +29,30 @@ class PlayerInfo {
         localStorage["health"] = PlayerInfo.ShipParameters["health"];
     }
 }
+
+class Inventory {
+    static Metal = 0;
+    static Irit = 0;
+    static Borit = 0;
+    static Aneit = 0;
+
+    static load() {
+        if (!localStorage)
+            return;
+
+        Inventory.Metal = localStorage["metal"] ?? 0;
+        Inventory.Irit = localStorage["irit"] ?? 0;
+        Inventory.Borit = localStorage["borit"] ?? 0;
+        Inventory.Aneit = localStorage["aneit"] ?? 0;
+    }
+
+    static save() {
+        if (!localStorage)
+            return;
+
+        localStorage["metal"] = Inventory.Metal;
+        localStorage["irit"] = Inventory.Irit;
+        localStorage["borit"] = Inventory.Borit;
+        localStorage["aneit"] = Inventory.Aneit;
+    }
+}

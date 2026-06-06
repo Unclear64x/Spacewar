@@ -61,6 +61,7 @@ class Input {
     }
 
     static init() {
+        Object.keys(Button).forEach((x) => { Input.#requests[x] = []; });
         window.addEventListener("keydown", (button) => Input.button(button, true));
         window.addEventListener("keyup", (button) => Input.button(button, false));
         window.addEventListener("mousemove", (move) => Input.mouseMove(move));

@@ -27,11 +27,16 @@ let meteoriteAnimation = {
 
 // иконки
 let materials = {
-    "metal": "materials/metal.png",
-    "irit": "materials/irit.png",
-    "borit": "materials/borit.png", //
-    "aneit": "materials/aneit.png"
+    "metal": new Image(),
+    "irit": new Image(),
+    "borit": new Image(),
+    "aneit": new Image()
 }
+
+materials["metal"].src = "sprites/materials/metal.png";
+materials["irit"].src = "sprites/materials/irit.png";
+materials["borit"].src = "sprites/materials/borit.png";
+materials["aneit"].src = "sprites/materials/aneit.png";
 
 let metalAnimation = {
     "root": "meteorite",

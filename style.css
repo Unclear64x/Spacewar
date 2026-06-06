@@ -13,21 +13,51 @@ body {
 .infoDot {
     position: absolute;
     transform-origin: center center;
-    display: flex;
+}
 
-    transition: transform 0.1s ease;
+.infoRow {
+    display: grid;
+
+    grid-template-columns: 7vmax 1fr;
+}
+
+.infoColumn {
+    width: 7vmax;
+    display: flex;
+    justify-content: center;
+}
+
+.info {
+    display: flex;
+    transform: translate(-3.5vmax, -3.5vmax);
+    flex-direction: column;
 }
 
 .infoContainer {
     display: flex;
     position: relative;
-
-    flex-direction: column;
+    color: var(--progress-bar-background);
+    opacity: 0.8;
     width: 10vmax;
-    transform: translate(-50%, -3.5vmax);
+    font-family: "consolas";
+
+    font-size: 1vmax;
+    
+    display: grid;
+    grid-template-columns: max-content max-content;
 
     align-items: center;
-    justify-content: center;
+
+    gap: 0 0.5vmax;
+    
+    /* transform: translate(-25%, 0); */
+}
+
+.vertivalMargin {
+    margin: 0.5vmax 0;
+}
+.horizontalMargin {
+    margin: 0 0.5vmax;
 }
 
 .squareInfo {
@@ -39,7 +69,7 @@ body {
     opacity: 0.5;
 }
 
-.textInfo {
+/* .info {
     color: var(--progress-bar-background);
     margin: 0;
     opacity: 0.8;
@@ -47,10 +77,16 @@ body {
     font-family: "consolas";
 
     font-size: 1vmax;
+    height: 1vmax;
 
     gap: 1vmax;
-    display: flex;
+    display: grid;
+    grid-template-columns: max-content max-content;
     align-items: center;
+} */
+
+.iconInfo {
+    height: 1vmax;
 }
 
 @property --progress-background {
@@ -65,28 +101,34 @@ body {
 }
 
 .progressInfo {
-    background-color: var(--progress-background);;
-    width: 100%;
+    background-color: var(--progress-background);
     height: 50%;
 
-    transition: value 0.3ms ease;
+    max-width: 5vmax;
 
     border: none;
     appearance: none;
-    /* -moz-appearance: none;
-    -webkit-appearance: none; */
+    -moz-appearance: none;
+    -webkit-appearance: none;
 }
 
 .progressInfo::-moz-progress-bar {
     background-color: var(--progress-bar-background);
-    border: none;
 }
 
-.playerStats {
+.progressInfo::-webkit-progress-bar {
+    background-color: var(--progress-background);
+}
+
+.progressInfo::-webkit-progress-value {
+    background-color: var(--progress-bar-background);
+}
+
+/* .playerStats {
     position: absolute;
     left: 0;
     top: 0;
-}
+} */
 
 .playerResources {
     position: absolute;
