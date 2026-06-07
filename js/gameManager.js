@@ -6,7 +6,7 @@ class GameManager {
     static SpawnMeteoriteTime = [];
 
     static MaxMeteoritesCount = 30;
-    static MaxEnemiesCount = 2;
+    static MaxEnemiesCount = 4;
 
     static DistanceFromPlayer = 2000;
     static Range = GameManager.DistanceFromPlayer + 1000;
