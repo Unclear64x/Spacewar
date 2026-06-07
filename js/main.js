@@ -54,8 +54,8 @@ function playerInput(deltaTime) {
     let tan = Math.atan2(Input.Cursor.y, Input.Cursor.x);
     let angle = tan - World.Player.angle;
     
-    if (angle < -Math.PI) angle += Math.PI * 2;
-    if (angle > Math.PI) angle -= Math.PI * 2;
+    while (angle < -Math.PI) angle += Math.PI * 2;
+    while (angle > Math.PI) angle -= Math.PI * 2;
     
     angularVelocity = (angle - World.Player.angularVelocity / 4);
 
