@@ -233,7 +233,7 @@ class DynamicObject extends BaseObject {
         super(uniqueId, animatorParams, startState, x, y);
 
         // интересно, кто у кого синтаксис повзаимствовал с ?
-        for (let i = 0; i < collider?.length ?? 0; i++) {
+        for (let i = 0; i < collider?.length || 0; i++) {
             collider[i].multiply(64);
         }
 

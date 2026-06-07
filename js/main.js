@@ -184,7 +184,7 @@ function load() {
     PlayerInfo.load();
     Inventory.load();
     if (localStorage) {
-        guiSize.value = Number(localStorage["guiSize"]) ?? 0;
+        guiSize.value = Number(localStorage["guiSize"]) || 0;
         document.body.style.setProperty("--size-addition", guiSize.value + "vmin");
     }
 }

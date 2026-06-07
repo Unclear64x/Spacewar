@@ -166,7 +166,7 @@ class GameObjectData extends ObjectData {
         data["first"] = first;
         data["second"] = second;
 
-        let container = data["container"] ?? 1;
+        let container = data["container"] || 1;
 
         if (container == 1)
             this.container1.append(first, second);
