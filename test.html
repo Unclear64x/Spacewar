@@ -4,38 +4,94 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="css/user_interface.css">
+    <link rel="stylesheet" href="css/upgrades.css">
     <link rel="stylesheet" href="css/general.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <script src="js/gui.js"></script>
 </head>
 <body>
-    <div class="upgrade-container">
-        <div id="parameters" class="list-container">
 
-            <div class="parameter-card text-style">
-                <span>Характеристика</span>
-                <progress value="0.1"></progress>
-            </div>
+    <div id="menu" class="centered-content">
+        <span class="title">SPACEWAR</span>
 
+        <div id="mainMenu" class="menu-item">
+            <button id="playButton" class="menu-button">Играть</button>
+            <button id="settingsButton" class="menu-button">Настройки</button>
+            <button id="exitButton" class="menu-button">Выход</button>
         </div>
 
-        <div id="upgrades" class="list-container">
+        <div id="settings" class="menu-item">
+            <div class="setting">
+                <span>Размер GUI</span>
+                <input id="guiSize" type="range" min="-2" max="2" value="0" step="0.25">
+            </div>
+            <button id="settingsBack" class="menu-button">Назад</button>
+        </div>
 
-            <div class="upgrade-card text-style">
+        <div id="upgrades" class="menu-item">
 
-                <button class="buy-button"></button>
+            <div id="upgradesContainer" class="text-style">
+
                 <div class="upgrade">
-                    <span>Урон</span>
+
+                    <span>Ускорение</span>
+
+                    <progress value="0.1"></progress>
+
                     <div class="upgrade-resources">
+
                         <div class="upgrade-resource">
                             <img src="sprites/materials/aneit.png" alt="aneit">
                             <span>80</span>
                         </div>
+
+                        <div class="upgrade-resource">
+                            <img src="sprites/materials/borit.png" alt="borit">
+                            <span>100</span>
+                        </div>
+                        
                     </div>
+
+                    <button class="buy-button">Улучшить</button>
+
+                </div>
+
+                <div class="upgrade">
+
+                    <span>Урон</span>
+
+                    <progress value="0.1"></progress>
+
+                    <div class="upgrade-resources">
+
+                        <div class="upgrade-resource">
+                            <img src="sprites/materials/aneit.png" alt="aneit">
+                            <span>80</span>
+                        </div>
+
+                        <div class="upgrade-resource danger">
+                            <img src="sprites/materials/borit.png" alt="borit">
+                            <span>100</span>
+                        </div>
+                        
+                    </div>
+
+                    <button class="buy-button" disabled>Улучшить</button>
+
                 </div>
 
             </div>
 
+            <button id="upgradesBack" class="menu-button">Назад</button>
+            <button id="start" class="menu-button">Играть</button>
+
         </div>
     </div>
+
+    <span id="destroyed" class="centered-content title">Уничтожен</span>
+
+    <img src="sprites/spacewar.png" alt="spacewar" id="spacewar">
+
+
 </body>
 </html>

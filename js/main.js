@@ -11,31 +11,39 @@ let cursorGlobal = new Vector(0, 0);
 
 addEventListeners();
 
+let pause = false;
+let run = false;
+
 let lastTime = 0;
 let deltaTime = 0;
 function update(currentTime) {
+    if (!run)
+        return;
+
     deltaTime = (currentTime - lastTime) / 1000;
     lastTime = currentTime;
 
     input();
 
-    playerInput(deltaTime);
-    //centerCameraAtPlayer();
+    if (!pause) {
+        playerInput(deltaTime);
+        //centerCameraAtPlayer();
 
-    physycs();
+        physycs();
 
-    for (let i in World.Objects) {
-        World.Objects[i].update(deltaTime);
+        for (let i in World.Objects) {
+            World.Objects[i].update(deltaTime);
+        }
+
+        GameManager.update();
+
+        Debug.displayInfo("main", "UPS", 1000 / deltaTime);
+        Debug.displayInfo("main", "Objects", Object.keys(World.Objects).length);
+        Debug.displayInfo("main", "DynamicObjects", Object.keys(World.DynamicObjects).length);
+
+        Camera.update();
+        Debug.update(Camera.ctx);
     }
-
-    GameManager.update();
-
-    Debug.displayInfo("main", "UPS", 1000 / deltaTime);
-    Debug.displayInfo("main", "Objects", Object.keys(World.Objects).length);
-    Debug.displayInfo("main", "DynamicObjects", Object.keys(World.DynamicObjects).length);
-
-    Camera.update();
-    Debug.update(Camera.ctx);
 
     requestAnimationFrame(update);
 }
@@ -79,8 +87,13 @@ function playerInput(deltaTime) {
 }
 
 function input() {
-    if (Input.keyJustPressed(Button.Backquote, "debug")) {
+    if (Input.keyJustPressed(Button.BACKQ, "debug")) {
         Debug.switchVisible();
+    }
+
+    if (Input.keyJustPressed(Button.ESC, "pause")) {
+        pause = !pause;
+        console.log("pause");
     }
 }
 
@@ -138,8 +151,44 @@ function resize() {
     console.log(Camera.canvas.width, Camera.canvas.height);
     console.log();
 
-
     //Camera.canvas.style.transform = `scale(${1 / window.devicePixelRatio})`;
+}
+
+function initGame() {
+    run = true;
+    World.clear();
+    World.Player = new Player(0, 0, PlayerInfo.ShipParameters);
+    update(0);
+}
+
+function endGame(momental = false) {
+    save();
+    updateUpgrades();
+    if (!momental) {
+        destroyed.style.visibility = "visible";
+        destroyed.style.opacity = 1;
+        setTimeout(() => {
+            destroyed.style.opacity = 0;
+            setTimeout(() => {
+                destroyed.style.visibility = "collapse";
+                run = false;
+                World.clear();
+                menu.style.display = "flex";
+            }, 2000);
+        }, 3000);
+    }
+}
+
+function load() {
+    PlayerInfo.load();
+    Inventory.load();
+    if (localStorage)
+        guiSize.value = Number(localStorage["guiSize"]) ?? 0;
+}
+
+function save() {
+    PlayerInfo.save();
+    Inventory.save();
 }
 
 function addEventListeners() {
@@ -149,15 +198,19 @@ function addEventListeners() {
         Camera.init();
         World.ObjectDatas = document.getElementById("objectDatas");
 
+        start.addEventListener("click", () => {
+            initGame();
+            menu.style.display = "none";
+        });
+
         window.addEventListener("resize", resize);
 
         //World.Space = document.getElementById("space");
         //World.Space.addEventListener('dragstart', (e) => e.preventDefault());
 
-        World.Player = new Player(0, 0, new ShipParameters());
-        new Meteorite(200, 0);
-
         resize();
-        update(0);
+
+        load();
+        createUpgrades();
     });
 }

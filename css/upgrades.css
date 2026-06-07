@@ -1,0 +1,60 @@
+.text-style {
+    color: lime;
+    font-size: calc(1.5vmin + var(--size-addition));
+}
+
+.danger {
+    color: rgb(255, 84, 84);
+}
+
+#upgradesContainer {
+    display: grid;
+    grid-template-columns: max-content 15vmin max-content max-content;
+    width: max-content;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 40vmin;
+    padding-right: calc(1.5vmin + var(--size-addition));
+}
+
+.upgrade {
+    background-color: #1a1a1a;
+    border-radius: calc(1vmin + var(--size-addition));
+    margin: calc(1vmin + var(--size-addition));
+
+    display: grid;
+    align-items: center;
+    gap: calc(2vmin + var(--size-addition));
+    padding: 0.6vmin calc(1vmin + var(--size-addition));
+
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+
+    height: calc(4.5vmin + var(--size-addition));
+    box-sizing: border-box;
+
+    width: 100%;
+}
+
+.upgrade-resources {
+    display: flex;
+    gap: calc(1vmin + var(--size-addition));
+    height: calc(4.5vmin - 1.2vmin + var(--size-addition));
+}
+
+.upgrade-resource {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.upgrade-resource img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+}
+
+.buy-button {
+    height: 100%;
+}

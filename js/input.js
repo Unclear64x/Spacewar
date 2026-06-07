@@ -61,7 +61,7 @@ class Input {
     }
 
     static init() {
-        Object.keys(Button).forEach((x) => { Input.#requests[x] = []; });
+        Object.keys(Button).forEach((x) => { Input.#requests[Button[x]] = []; });
         window.addEventListener("keydown", (button) => Input.button(button, true));
         window.addEventListener("keyup", (button) => Input.button(button, false));
         window.addEventListener("mousemove", (move) => Input.mouseMove(move));
@@ -96,5 +96,5 @@ class Button {
     static D8 = "Digit8";
     static D9 = "Digit9";
     static D0 = "Digit0";
-    static Backquote = "Backquote";
+    static BACKQ = "Backquote";
 }

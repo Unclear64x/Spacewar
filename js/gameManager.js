@@ -41,7 +41,7 @@ class GameManager {
 
             GameManager.SpawnEnemyTimer = setTimeout(() => {
                 let position = GameManager.spawnPosition();
-                let enemy = new Enemy(position.x, position.y, new ShipParameters());
+                let enemy = new Enemy(position.x, position.y, PlayerInfo.ShipParameters);
                 enemy.angle = random(0, Math.PI * 2);
                 GameManager.SpawnEnemyTimer = null;
                 GameManager.SpawnEnemyTime[0] = 0;

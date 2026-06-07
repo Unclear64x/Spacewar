@@ -38,33 +38,17 @@ materials["irit"].src = "sprites/materials/irit.png";
 materials["borit"].src = "sprites/materials/borit.png";
 materials["aneit"].src = "sprites/materials/aneit.png";
 
-let metalAnimation = {
-    "root": "meteorite",
-    "states": {
-        "metal": [1, 0]
-    }
+let meteoriteMaterials = {
+    "metal": new Image(),
+    "irit": new Image(),
+    "borit": new Image(),
+    "aneit": new Image()
 }
 
-let iritAnimation = {
-    "root": "materials",
-    "states": {
-        "irit": [1, 0]
-    }
-}
-
-let boritAnimation = {
-    "root": "materials",
-    "states": {
-        "borit": [1, 0]
-    }
-}
-
-let aneitAnimation = {
-    "root": "materials",
-    "states": {
-        "aneit": [1, 0]
-    }
-}
+meteoriteMaterials["metal"].src = "sprites/meteorite/metal.png";
+meteoriteMaterials["irit"].src = "sprites/meteorite/irit.png";
+meteoriteMaterials["borit"].src = "sprites/meteorite/borit.png";
+meteoriteMaterials["aneit"].src = "sprites/meteorite/aneit.png";
 
 let spaceImage = new Image();
 spaceImage.src = "sprites/space.png";

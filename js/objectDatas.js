@@ -142,7 +142,6 @@ class GameObjectData extends ObjectData {
                 first.innerText = title;
 
                 second = document.createElement("progress");
-                second.setAttribute("class", "progressInfo");
                 break;
 
             case "text":

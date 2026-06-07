@@ -1,0 +1,81 @@
+.centered-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#menu {
+    height: 70vmin;
+    width: 70vmin;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(1vmin + var(--size-addition));
+
+    height: 100%;
+}
+
+.title {
+    font-weight: 600;
+    color: lime;
+    font-size: calc(5vmin + var(--size-addition));
+    text-align: center;
+    margin-bottom: calc(4vmin + var(--size-addition));
+}
+
+.menu-button {
+    height: calc(3.5vmin + var(--size-addition));
+    width: 50%;
+}
+
+.setting {
+    color: lime;
+    font-size: 1.5vmin;
+    display: flex;
+    gap: calc(1vmin + var(--size-addition));
+}
+
+#settingsBack {
+    margin-top: auto;
+}
+
+#mainMenu {
+    justify-content: center;
+    visibility: visible;
+}
+
+#settings {
+    visibility: collapse;
+}
+
+#upgrades {
+    visibility: collapse;
+}
+
+#upgradesBack {
+    margin-top: auto;
+}
+
+#spacewar {
+    position: absolute;
+    right: 0;
+    bottom: -7.5vmin;
+    transition: transform 1s ease;
+
+    height: 7.5vmin;
+    object-fit: contain;
+}
+
+#destroyed {
+    color: rgb(255, 84, 84);
+    visibility: collapse;
+    opacity: 0;
+    transition: opacity 2s ease;
+}

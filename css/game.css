@@ -21,7 +21,6 @@
 }
 
 .infoContainer {
-    display: flex;
     position: relative;
     color: var(--progress-bar-background);
     opacity: 0.8;
@@ -30,7 +29,7 @@
     font-size: 1vmax;
     
     display: grid;
-    grid-template-columns: max-content max-content;
+    grid-template-columns: max-content 5vmax;
 
     align-items: center;
 
@@ -55,41 +54,6 @@
 
 .iconInfo {
     height: 1vmax;
-}
-
-@property --progress-background {
-    syntax: "<color>";
-    inherits: true;
-    initial-value: green;
-}
-@property --progress-bar-background {
-    syntax: "<color>";
-    inherits: true;
-    initial-value: lime;
-}
-
-.progressInfo {
-    background-color: var(--progress-background);
-    height: 50%;
-
-    max-width: 5vmax;
-
-    border: none;
-    appearance: none;
-    -moz-appearance: none;
-    -webkit-appearance: none;
-}
-
-.progressInfo::-moz-progress-bar {
-    background-color: var(--progress-bar-background);
-}
-
-.progressInfo::-webkit-progress-bar {
-    background-color: var(--progress-background);
-}
-
-.progressInfo::-webkit-progress-value {
-    background-color: var(--progress-bar-background);
 }
 
 /* .playerStats {

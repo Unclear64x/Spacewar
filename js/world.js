@@ -29,11 +29,11 @@ class World {
 
     static clear() {
         for (let i in World.Objects) {
-            i.destroy();
+            World.Objects[i].destroy();
         }
         
         for (let i in World.ParticleSystems) {
-            i.destroy();
+            World.ParticleSystems[i].destroy();
         }
     }
 }

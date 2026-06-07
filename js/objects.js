@@ -428,11 +428,11 @@ class DamageableObject extends DynamicObject {
         World.DamagableObjects[this.id] = this;
     }
 
-    dealDamage(value, dotInfo) {
+    dealDamage(value, dotInfo, who) {
         this.health -= value;
 
         if (this.health <= 0) {
-            this.destroy();
+            this.destroy(who);
             this.damageParticleSystem.angleRange = 360;
             this.damageParticleSystem.shot(this.damageParticleSystem.maxParticles);
             return;

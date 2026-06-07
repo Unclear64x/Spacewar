@@ -16,14 +16,66 @@
     <script src="js/camera.js"></script>
     <script src="js/debug.js"></script>
     <script src="js/gameManager.js"></script>
+    <script src="js/gui.js"></script>
     <script src="js/main.js"></script>
     <link rel="stylesheet" href="css/general.css">
-    <link rel="stylesheet" href="css/user_interface.css">
-    <link rel="stylesheet" href="css/game_interface.css">
+    <link rel="stylesheet" href="css/game.css">
+    <link rel="stylesheet" href="css/upgrades.css">
+    <link rel="stylesheet" href="css/menu.css">
     <title>Spacewar</title>
 </head>
 <body>
     <canvas id="canvas"></canvas>
     <div id="objectDatas"></div>
+
+        <div id="menu" class="centered-content">
+        <span class="title">SPACEWAR</span>
+
+        <div id="mainMenu" class="menu-item">
+            <button id="playButton" class="menu-button">Играть</button>
+            <button id="settingsButton" class="menu-button">Настройки</button>
+            <button id="exitButton" class="menu-button">Выход</button>
+        </div>
+
+        <div id="settings" class="menu-item">
+            <div class="setting">
+                <span>Размер GUI</span>
+                <input id="guiSize" type="range" min="-1" max="1" value="0" step="0.25">
+            </div>
+            <button id="settingsBack" class="menu-button">Назад</button>
+        </div>
+
+        <div id="upgrades" class="menu-item">
+
+            <div id="upgradesContainer" class="text-style"> </div>
+
+            <div class="upgrade-resources text-style">
+                <div class="upgrade-resource">
+                    <img src="sprites/materials/metal.png" alt="metal">
+                    <span id="avaibleMetal">0</span>
+                </div>
+                <div class="upgrade-resource">
+                    <img src="sprites/materials/irit.png" alt="irit">
+                    <span id="avaibleIrit">0</span>
+                </div>
+                <div class="upgrade-resource">
+                    <img src="sprites/materials/borit.png" alt="borit">
+                    <span id="avaibleBorit">0</span>
+                </div>
+                <div class="upgrade-resource">
+                    <img src="sprites/materials/aneit.png" alt="aneit">
+                    <span id="avaibleAneit">0</span>
+                </div>
+            </div>
+
+            <button id="upgradesBack" class="menu-button">Назад</button>
+            <button id="start" class="menu-button">Играть</button>
+
+        </div>
+    </div>
+
+    <span id="destroyed" class="centered-content title">Уничтожен</span>
+
+    <img src="sprites/spacewar.png" alt="spacewar" id="spacewar">
 </body>
 </html>

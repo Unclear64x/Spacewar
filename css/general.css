@@ -11,3 +11,66 @@ body {
 
     font-family: "consolas";
 }
+
+@property --progress-background {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: green;
+}
+@property --progress-bar-background {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: lime;
+}
+
+@property --size-addition {
+    syntax: "<length>";
+    inherits: true;
+    initial-value: 0;
+}
+
+progress {
+    background-color: var(--progress-background);
+    height: 50%;
+
+    box-sizing: border-box;
+
+    border: none;
+    appearance: none;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+}
+
+progress::-moz-progress-bar {
+    background-color: var(--progress-bar-background);
+}
+
+progress::-webkit-progress-bar {
+    background-color: var(--progress-background);
+}
+
+progress::-webkit-progress-value {
+    background-color: var(--progress-bar-background);
+}
+
+button {
+    border: none;
+    padding: 0 calc(1.5vmin + var(--size-addition));
+    font-size: calc(1.5vmin + var(--size-addition));
+
+    border-radius: calc(1vmin + var(--size-addition));
+    color: lime;
+    background-color: rgb(50, 50, 50);
+}
+
+button:hover {
+    background-color: rgb(50, 80, 50);
+}
+
+button:active {
+    background-color: rgb(50, 70, 50);
+}
+
+button:disabled {
+    background-color: rgb(0, 0, 0);
+}

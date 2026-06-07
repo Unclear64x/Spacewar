@@ -282,7 +282,7 @@ class Bullet extends DynamicObject {
 
         if (!isBullet && !isOwner && isDamagable) {
             clearTimeout(this.timer);
-            object.dealDamage(this.damage, dotInfo);
+            object.dealDamage(this.damage, dotInfo, this.owner);
             this.destroy();
         }
 
@@ -396,28 +396,28 @@ class Player extends Ship {
                 "type": "icon",
                 "icon": materials["metal"].src,
                 "object": Inventory,
-                "valueName": ["Metal"]
+                "valueName": ["metal"]
             },
             "Ирит": {
                 "container": 2,
                 "type": "icon",
                 "icon": materials["irit"].src,
                 "object": Inventory,
-                "valueName": ["Irit"]
+                "valueName": ["irit"]
             },
             "Борит": {
                 "container": 2,
                 "type": "icon",
                 "icon": materials["borit"].src,
                 "object": Inventory,
-                "valueName": ["Borit"]
+                "valueName": ["borit"]
             },
             "Анеит": {
                 "container": 2,
                 "type": "icon",
                 "icon": materials["aneit"].src,
                 "object": Inventory,
-                "valueName": ["Aneit"]
+                "valueName": ["aneit"]
             },
         }
         
@@ -427,6 +427,7 @@ class Player extends Ship {
 
     destroy() {
         super.destroy();
+        endGame();
     }
 }
 
@@ -436,7 +437,9 @@ class Meteorite extends DamageableObject {
     renderMaterial;
     material = {"name": "", "count": 0};
 
-    constructor(x, y, material) {
+    materialImage;
+
+    constructor(x, y) {
         let collider = [
             new Vector(-0.15625, -0.5),
             new Vector(-0.5, -0.359),
@@ -451,6 +454,9 @@ class Meteorite extends DamageableObject {
 
         World.Meteorites[this.id] = this;
 
+        this.material["name"] = ["metal", "irit", "", "borit", "aneit"][randomInt(0, 4)];
+        this.material["count"] = randomInt(1, 10);
+
         let data = {
             "Состояние": {
                 "type": "progress",
@@ -459,8 +465,31 @@ class Meteorite extends DamageableObject {
                 "maxValueName": ["maxHealth"]
             },
         }
+
+        if (this.material["name"]) {
+            // console.log(this.id, this.material["name"]);
+
+            data[materialNames[this.material["name"]]] = {
+                "type": "text",
+                "object": this,
+                "valueName": ["material", "count"],
+            }
+
+            this.materialImage = meteoriteMaterials[this.material["name"]];
+        }
         
         this.data = new GameObjectData(this.globalPosition, data);
+    }
+
+    /**
+     * 
+     * @param {CanvasRenderingContext2D} ctx 
+     */
+    _renderContent(ctx) {
+        super._renderContent(ctx);
+        if (!this.materialImage)
+            return;
+        ctx.drawImage(this.materialImage, -this.width / 2, -this.height / 2, this.width, this.height);
     }
 
     update(deltaTime) {
@@ -472,10 +501,14 @@ class Meteorite extends DamageableObject {
             this.destroy();
     }
 
-    destroy() {
+    destroy(who) {
         World.Meteorites[this.id] = this;
         super.destroy();
         // World.delete(World.Meteorites, this.id);
         delete World.Meteorites[this.id];
+
+        if (who && who instanceof Player) {
+            Inventory[this.material["name"]] += this.material["count"];
+        }
     }
 }
