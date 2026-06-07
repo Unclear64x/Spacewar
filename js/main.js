@@ -161,12 +161,13 @@ function endGame(momental = false) {
     save();
     updateUpgrades();
     if (!momental) {
-        destroyed.style.visibility = "visible";
+        // destroyed.style.visibility = "visible";
+        destroyed.style.display = "flex";
         destroyed.style.opacity = 1;
         setTimeout(() => {
             destroyed.style.opacity = 0;
             setTimeout(() => {
-                destroyed.style.visibility = "collapse";
+                destroyed.style.display = "none";
                 run = false;
                 World.clear();
                 menu.style.display = "flex";

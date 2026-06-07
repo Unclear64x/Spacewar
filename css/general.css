@@ -32,9 +32,11 @@ body {
 progress {
     background-color: var(--progress-background);
     height: 50%;
+    width: 100%;
 
     box-sizing: border-box;
 
+    display: inline-block;
     border: none;
     appearance: none;
     -moz-appearance: none;

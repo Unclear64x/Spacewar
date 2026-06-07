@@ -76,8 +76,8 @@ addEventListener("DOMContentLoaded", () => {
 });
 
 function switchVisible(off, on) {
-    off.style.visibility = "collapse";
-    on.style.visibility = "visible";
+    off.style.display = "none";
+    on.style.display = "flex";
 }
 
 let avaibleUpgrades = {

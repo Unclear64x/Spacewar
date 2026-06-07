@@ -48,15 +48,14 @@
 
 #mainMenu {
     justify-content: center;
-    visibility: visible;
 }
 
 #settings {
-    visibility: collapse;
+    display: none;
 }
 
 #upgrades {
-    visibility: collapse;
+    display: none;
 }
 
 #upgradesBack {
@@ -75,7 +74,7 @@
 
 #destroyed {
     color: rgb(255, 84, 84);
-    visibility: collapse;
+    display: none;
     opacity: 0;
     transition: opacity 2s ease;
 }
