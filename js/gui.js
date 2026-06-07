@@ -17,13 +17,22 @@ let destroyed;
 let guiSize;
 
 addEventListener("DOMContentLoaded", () => {
-    let spacewar = document.getElementById("spacewar");
-    setTimeout(() => {
-        spacewar.style.transform = "translate(0px, -6.5vmin)";
-    }, 1000);
-    setTimeout(() => {
-        spacewar.style.transform = "translate(0px, 7.5vmin)";
-    }, 5000);
+    if (localStorage) {
+        let tryNum = Number(localStorage["spacewar"]) || 1;
+
+        if (tryNum < 3) {
+            let spacewar = document.getElementById("spacewar");
+            setTimeout(() => {
+                spacewar.style.transform = "translate(0px, -6.5vmin)";
+            }, 1000);
+            setTimeout(() => {
+                spacewar.style.transform = "translate(0px, 7.5vmin)";
+            }, 5000);
+
+            tryNum++;
+            localStorage["spacewar"] = tryNum;
+        }
+    }
 
     menu = document.getElementById("menu");
 
@@ -125,6 +134,7 @@ function createUpgrades() {
             upgradeResource.setAttribute("class", "upgrade-resource" + (avaible ? "" : " danger"));
             let image = document.createElement("img");
             image.src = materials[avaibleMaterials[i - 2]].src;
+            image.alt = avaibleMaterials[i - 2];
             let resCount = document.createElement("span");
             resCount.innerText = count;
             upgradeResource.append(image, resCount);

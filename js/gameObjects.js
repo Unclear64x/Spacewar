@@ -51,7 +51,6 @@ class Ship extends DamageableObject {
 
         super(collider, id, shipAnimation, "idle", x, y, 40);
 
-
         this.maxVelocity = shipParameters.maxVelocity;
         this.tickVelocity = shipParameters.tickVelocity;
 

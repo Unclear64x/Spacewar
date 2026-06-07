@@ -1,12 +1,8 @@
 /**============== ввод игрока ========= */
-let move = false;
 let velocity = new Vector(0, 0);
 let forwardVelocity = new Vector(0, 0);
 let rightVelocity = new Vector(0, 0);
 let angularVelocity = 0;
-
-let cursor = new Vector(0, 0);
-let cursorGlobal = new Vector(0, 0);
 /**============== ввод игрока ========= */
 
 addEventListeners();
@@ -177,13 +173,20 @@ function endGame(momental = false) {
             }, 2000);
         }, 3000);
     }
+    
+    velocity.multiply(0);
+    forwardVelocity.multiply(0);
+    rightVelocity.multiply(0);
+    angularVelocity = 0;
 }
 
 function load() {
     PlayerInfo.load();
     Inventory.load();
-    if (localStorage)
+    if (localStorage) {
         guiSize.value = Number(localStorage["guiSize"]) ?? 0;
+        document.body.style.setProperty("--size-addition", guiSize.value + "vmin");
+    }
 }
 
 function save() {
