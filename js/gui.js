@@ -99,17 +99,17 @@ function updateUpgrades() {
         createdUpgrades[x][0].value = PlayerInfo.ShipParameters[x] / avaibleUpgrades[x][1];
         let canBuy = true;
         for (let i in createdUpgrades[x][1]) {
-            let avaible = Inventory[i] >= createdUpgrades[x][1][i][0];
+            let avaible = PlayerInfo.Inventory[i] >= createdUpgrades[x][1][i][0];
             canBuy = canBuy && avaible;
             createdUpgrades[x][1][i][1].setAttribute("class", "upgrade-resource" + (avaible ? "" : " danger"));
         }
         createdUpgrades[x][2].disabled = !canBuy;
     };
 
-    avaibleMetal.innerText = Inventory["metal"];
-    avaibleIrit.innerText = Inventory["irit"];
-    avaibleBorit.innerText = Inventory["borit"];
-    avaibleAneit.innerText = Inventory["aneit"];
+    avaibleMetal.innerText = PlayerInfo.Inventory["metal"];
+    avaibleIrit.innerText = PlayerInfo.Inventory["irit"];
+    avaibleBorit.innerText = PlayerInfo.Inventory["borit"];
+    avaibleAneit.innerText = PlayerInfo.Inventory["aneit"];
 }
 
 function createUpgrades() {
@@ -128,7 +128,7 @@ function createUpgrades() {
             let count = avaibleUpgrades[x][i];
             if (!count)
                 continue;
-            let avaible = Inventory[avaibleMaterials[i - 2]] >= count;
+            let avaible = PlayerInfo.Inventory[avaibleMaterials[i - 2]] >= count;
             canBuy = canBuy && avaible;
             let upgradeResource = document.createElement("div");
             upgradeResource.setAttribute("class", "upgrade-resource" + (avaible ? "" : " danger"));
@@ -149,7 +149,7 @@ function createUpgrades() {
             buy.disabled = true;
             PlayerInfo.ShipParameters[x] += avaibleUpgrades[x][6];
             for (let i in createdUpgrades[x][1]) {
-                Inventory[i] -= createdUpgrades[x][1][i][0];
+                PlayerInfo.Inventory[i] -= createdUpgrades[x][1][i][0];
             }
             updateUpgrades();
             save();
@@ -159,8 +159,8 @@ function createUpgrades() {
         upgradesContainer.append(upgrade);
     }
 
-    avaibleMetal.innerText = Inventory["metal"];
-    avaibleIrit.innerText = Inventory["irit"];
-    avaibleBorit.innerText = Inventory["borit"];
-    avaibleAneit.innerText = Inventory["aneit"];
+    avaibleMetal.innerText = PlayerInfo.Inventory["metal"];
+    avaibleIrit.innerText = PlayerInfo.Inventory["irit"];
+    avaibleBorit.innerText = PlayerInfo.Inventory["borit"];
+    avaibleAneit.innerText = PlayerInfo.Inventory["aneit"];
 }

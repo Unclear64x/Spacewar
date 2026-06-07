@@ -1,58 +1,80 @@
-class PlayerInfo {
-    static ShipParameters = new ShipParameters();
+class Inventory {
+    metal = 0;
+    irit = 0;
+    borit = 0;
+    aneit = 0;
 
-    static load() {
-        if (!localStorage)
+    load() {
+        if (!localStorage || !localStorage["inventory"])
             return;
 
-        PlayerInfo.ShipParameters["maxVelocity"] = Number(localStorage["maxVelocity"]) || 300;
-        PlayerInfo.ShipParameters["tickVelocity"] = Number(localStorage["tickVelocity"]) || 3;
-        PlayerInfo.ShipParameters["boost"] = Number(localStorage["boost"]) || 3;
-        PlayerInfo.ShipParameters["charge"] = Number(localStorage["charge"]) || 1;
-        PlayerInfo.ShipParameters["recharge"] = Number(localStorage["recharge"]) || 0.2;
-        PlayerInfo.ShipParameters["damage"] = Number(localStorage["damage"]) || 10;
-        PlayerInfo.ShipParameters["fireRate"] = Number(localStorage["fireRate"]) || 1;
-        PlayerInfo.ShipParameters["health"] = Number(localStorage["health"]) || 100;
+        let json = JSON.parse(localStorage["inventory"]);
+
+        for (let i in json) {
+            this[i] = json[i];
+        }
+
+        // Inventory.metal = Number(localStorage["metal"]) || 0;
+        // Inventory.irit = Number(localStorage["irit"]) || 0;
+        // Inventory.borit = Number(localStorage["borit"]) || 0;
+        // Inventory.aneit = Number(localStorage["aneit"]) || 0;
     }
 
-    static save() {
+    save() {
         if (!localStorage)
             return;
-        
-        localStorage["maxVelocity"] = PlayerInfo.ShipParameters["maxVelocity"];
-        localStorage["tickVelocity"] = PlayerInfo.ShipParameters["tickVelocity"];
-        localStorage["boost"] = PlayerInfo.ShipParameters["boost"];
-        localStorage["charge"] = PlayerInfo.ShipParameters["charge"];
-        localStorage["recharge"] = PlayerInfo.ShipParameters["recharge"];
-        localStorage["damage"] = PlayerInfo.ShipParameters["damage"];
-        localStorage["fireRate"] = PlayerInfo.ShipParameters["fireRate"];
-        localStorage["health"] = PlayerInfo.ShipParameters["health"];
+
+        let json = JSON.stringify(this);
+
+        localStorage["inventory"] = json;
+
+        // localStorage["metal"] = Inventory.metal;
+        // localStorage["irit"] = Inventory.irit;
+        // localStorage["borit"] = Inventory.borit;
+        // localStorage["aneit"] = Inventory.aneit;
     }
 }
 
-class Inventory {
-    static metal = 0;
-    static irit = 0;
-    static borit = 0;
-    static aneit = 0;
+class PlayerInfo {
+    static ShipParameters = new ShipParameters();
+    static Inventory = new Inventory();
 
     static load() {
-        if (!localStorage)
+        if (!localStorage || !localStorage["playerInfo"])
             return;
 
-        Inventory.metal = Number(localStorage["metal"]) || 0;
-        Inventory.irit = Number(localStorage["irit"]) || 0;
-        Inventory.borit = Number(localStorage["borit"]) || 0;
-        Inventory.aneit = Number(localStorage["aneit"]) || 0;
+        let json = JSON.parse(localStorage["playerInfo"]);
+        for (let i in json) {
+            PlayerInfo.ShipParameters[i] = json[i];
+        }
+        this.Inventory.load();
+        // PlayerInfo.ShipParameters["maxVelocity"] = Number(localStorage["maxVelocity"]) || 300;
+        // PlayerInfo.ShipParameters["tickVelocity"] = Number(localStorage["tickVelocity"]) || 3;
+        // PlayerInfo.ShipParameters["boost"] = Number(localStorage["boost"]) || 3;
+        // PlayerInfo.ShipParameters["charge"] = Number(localStorage["charge"]) || 1;
+        // PlayerInfo.ShipParameters["recharge"] = Number(localStorage["recharge"]) || 0.2;
+        // PlayerInfo.ShipParameters["damage"] = Number(localStorage["damage"]) || 10;
+        // PlayerInfo.ShipParameters["fireRate"] = Number(localStorage["fireRate"]) || 1;
+        // PlayerInfo.ShipParameters["health"] = Number(localStorage["health"]) || 100;
     }
 
     static save() {
         if (!localStorage)
             return;
 
-        localStorage["metal"] = Inventory.metal;
-        localStorage["irit"] = Inventory.irit;
-        localStorage["borit"] = Inventory.borit;
-        localStorage["aneit"] = Inventory.aneit;
+        let json = JSON.stringify(PlayerInfo.ShipParameters)
+        
+        localStorage["playerInfo"] = json;
+
+        this.Inventory.save();
+
+        // localStorage["maxVelocity"] = PlayerInfo.ShipParameters["maxVelocity"];
+        // localStorage["tickVelocity"] = PlayerInfo.ShipParameters["tickVelocity"];
+        // localStorage["boost"] = PlayerInfo.ShipParameters["boost"];
+        // localStorage["charge"] = PlayerInfo.ShipParameters["charge"];
+        // localStorage["recharge"] = PlayerInfo.ShipParameters["recharge"];
+        // localStorage["damage"] = PlayerInfo.ShipParameters["damage"];
+        // localStorage["fireRate"] = PlayerInfo.ShipParameters["fireRate"];
+        // localStorage["health"] = PlayerInfo.ShipParameters["health"];
     }
 }

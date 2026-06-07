@@ -182,7 +182,6 @@ function endGame(momental = false) {
 
 function load() {
     PlayerInfo.load();
-    Inventory.load();
     if (localStorage) {
         guiSize.value = Number(localStorage["guiSize"]) || 0;
         document.body.style.setProperty("--size-addition", guiSize.value + "vmin");
@@ -191,7 +190,6 @@ function load() {
 
 function save() {
     PlayerInfo.save();
-    Inventory.save();
 }
 
 function addEventListeners() {

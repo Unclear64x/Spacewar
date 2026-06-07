@@ -394,28 +394,28 @@ class Player extends Ship {
                 "container": 2,
                 "type": "icon",
                 "icon": materials["metal"].src,
-                "object": Inventory,
+                "object": PlayerInfo.Inventory,
                 "valueName": ["metal"]
             },
             "Ирит": {
                 "container": 2,
                 "type": "icon",
                 "icon": materials["irit"].src,
-                "object": Inventory,
+                "object": PlayerInfo.Inventory,
                 "valueName": ["irit"]
             },
             "Борит": {
                 "container": 2,
                 "type": "icon",
                 "icon": materials["borit"].src,
-                "object": Inventory,
+                "object": PlayerInfo.Inventory,
                 "valueName": ["borit"]
             },
             "Анеит": {
                 "container": 2,
                 "type": "icon",
                 "icon": materials["aneit"].src,
-                "object": Inventory,
+                "object": PlayerInfo.Inventory,
                 "valueName": ["aneit"]
             },
         }
@@ -507,7 +507,7 @@ class Meteorite extends DamageableObject {
         delete World.Meteorites[this.id];
 
         if (who && who instanceof Player) {
-            Inventory[this.material["name"]] += this.material["count"];
+            PlayerInfo.Inventory[this.material["name"]] += this.material["count"];
         }
     }
 }
